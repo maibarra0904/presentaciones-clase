@@ -1,0 +1,334 @@
+import { useMemo, useRef, useState, useEffect } from 'react'
+import { useParams, Link } from 'react-router-dom'
+import Fab from '@mui/material/Fab'
+import Tooltip from '@mui/material/Tooltip'
+import CircularProgress from '@mui/material/CircularProgress'
+import PRESENTATIONS from '../data/presentations'
+import SlideViewClassic from '../components/preview/SlideViewClassic'
+import type { Slide } from '../services/grok'
+import { jsPDF as JsPDF } from 'jspdf'
+import html2canvas from 'html2canvas'
+
+
+type Presentation = { metadata?: { subject?: string; teacher?: string; logo?: string; unit?: string }; slides?: Slide[] }
+
+export default function PresentationPage() {
+  const { id } = useParams()
+  const pres = useMemo(() => (id ? (PRESENTATIONS as Record<string, Presentation>)[id] : undefined), [id])
+  const slides = useMemo(() => (pres?.slides || []) as Slide[], [pres])
+  const metadata = pres?.metadata
+
+  // Estimate maximum content height (px) across slides before rendering preview.
+  const estimatedMaxHeight = useMemo(() => {
+    if (!slides || slides.length === 0) return undefined
+    const avgCharsPerLine = 60
+    const lineHeight = 20 // px
+    const imageMediaHeight = 208 // px (lg:h-52 tailwind ~13rem = 208px)
+    const base = 220 // title + paddings + header/footer estimate
+
+    const estimateFor = (s: Slide) => {
+      const text = `${s.title || ''} ${s.content || ''}`.trim()
+      const textLines = Math.max(1, Math.ceil(text.length / avgCharsPerLine))
+      const textHeight = textLines * lineHeight
+      let mediaHeight = 0
+      if (s.images && s.images.length > 0) {
+        // If images are side-by-side we keep single height; if stacked, approximate additional height
+        mediaHeight = imageMediaHeight
+        if (s.images.length > 1) mediaHeight += Math.floor(imageMediaHeight * 0.35)
+      }
+      if (s.videos && s.videos.length > 0) {
+        mediaHeight = Math.max(mediaHeight, imageMediaHeight)
+        if (s.videos.length > 1) mediaHeight += Math.floor(imageMediaHeight * 0.35)
+      }
+      return base + textHeight + mediaHeight
+    }
+
+    let max = 0
+    for (const s of slides) {
+      const h = estimateFor(s)
+      if (h > max) max = h
+    }
+    // add small safety margin
+    return Math.ceil(max + 40)
+  }, [slides])
+
+  const [index, setIndex] = useState(0)
+  const exportRef = useRef<HTMLDivElement | null>(null)
+  const [exporting, setExporting] = useState(false)
+  const thumbsRef = useRef<HTMLDivElement | null>(null)
+  const [cardWidth, setCardWidth] = useState<number | null>(null)
+  const [fontSizePx, setFontSizePx] = useState<number | null>(null)
+  const slideBoxRef = useRef<HTMLDivElement | null>(null)
+
+  const isFirst = index === 0
+  const isLast = index === slides.length - 1
+
+  // default visibility: show all media
+  const visibility = useMemo(() => {
+    const images: Record<number, boolean> = {}
+    const videos: Record<number, boolean> = {}
+    slides.forEach((_, i) => {
+      images[i] = true
+      videos[i] = true
+    })
+    return { images, videos }
+  }, [slides])
+
+  // compute card width so exactly 5 cards fit in the visible area (or fewer if slides < 5)
+  useEffect(() => {
+    function compute() {
+      const visible = Math.min(5, slides.length || 1)
+      // prefer to size relative to the slide box width (max-w-3xl)
+      const parent = slideBoxRef.current
+      const parentWidth = parent ? parent.clientWidth : Math.min(1024, window.innerWidth - 40)
+      const w = Math.floor(parentWidth / visible)
+      setCardWidth(w)
+      // font size proportional to card width, clamp between 11 and 18
+      const f = Math.max(11, Math.min(18, Math.floor(w * 0.12)))
+      setFontSizePx(f)
+    }
+    compute()
+    window.addEventListener('resize', compute)
+    return () => window.removeEventListener('resize', compute)
+  }, [slides.length])
+  // compute translateX for the inner track so the active card is centered in the visible viewport
+  const trackTranslate = useMemo(() => {
+    if (!cardWidth) return '0px'
+    const visible = Math.min(5, slides.length)
+    const totalWidth = slides.length * cardWidth
+    const viewportWidth = visible * cardWidth
+    // desired center offset so active card is centered
+    const centerOffset = (index - (visible - 1) / 2) * cardWidth
+    const maxOffset = Math.max(0, totalWidth - viewportWidth)
+    const clamped = Math.max(0, Math.min(centerOffset, maxOffset))
+    return `${clamped}px`
+  }, [index, cardWidth, slides.length])
+
+  if (!pres) {
+    return (
+      <div className="p-8 text-center">
+        <h2 className="text-xl font-bold mb-2">Presentación no encontrada</h2>
+        <p className="text-gray-600 mb-4">No pude encontrar la presentación con id <strong>{id}</strong>.</p>
+        <Link to="/" className="text-blue-600 underline">Volver al generador</Link>
+      </div>
+    )
+  }
+
+  return (
+    
+    <div className="px-4 sm:px-6">
+      <div className="flex items-center justify-end gap-2 mb-3">
+        <Tooltip title={exporting ? 'Generando PDF...' : 'Descargar en PDF'}>
+          <span>
+            <Fab
+              onClick={async () => {
+                if (!exportRef.current) return
+                setExporting(true)
+                const doc = new JsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' })
+                const pdfWidth = doc.internal.pageSize.getWidth()
+                const pdfHeight = doc.internal.pageSize.getHeight()
+
+                const nodes = Array.from(exportRef.current.children) as HTMLElement[]
+                for (let i = 0; i < nodes.length; i++) {
+                  const node = nodes[i]
+                  // Temporarily force width to 1024 to keep consistent aspect
+                  const originalWidth = node.style.width
+                  node.style.width = '1024px'
+
+                  // Collect video elements and their bounding rects relative to the node
+                  const nodeRect = node.getBoundingClientRect()
+                  const nodeWidthPx = nodeRect.width || 1024
+                  const nodeHeightPx = nodeRect.height || nodeWidthPx * 0.75
+                  const videoEls = Array.from(node.querySelectorAll('[data-video-url]')) as HTMLElement[]
+                  const videosInfo = videoEls.map((el) => {
+                    const r = el.getBoundingClientRect()
+                    return {
+                      url: el.getAttribute('data-video-url') || undefined,
+                      left: r.left - nodeRect.left,
+                      top: r.top - nodeRect.top,
+                      width: r.width,
+                      height: r.height,
+                    }
+                  })
+
+                  const canvas = await html2canvas(node, { scale: 2, useCORS: true })
+                  node.style.width = originalWidth
+
+                  const imgData = canvas.toDataURL('image/jpeg', 0.95)
+                  // Use the jsPDF instance typing for image properties
+                  const imgProps = doc.getImageProperties(imgData) as { width: number; height: number }
+                  let imgWidth = pdfWidth
+                  let imgHeight = (imgProps.height * pdfWidth) / imgProps.width
+                  // Fit image into page while keeping margins
+                  const margin = 10
+                  if (imgHeight > pdfHeight - margin * 2) {
+                    imgHeight = pdfHeight - margin * 2
+                    imgWidth = (imgProps.width * imgHeight) / imgProps.height
+                  }
+
+                  const x = (pdfWidth - imgWidth) / 2
+                  const y = margin
+                  if (i > 0) doc.addPage()
+                  doc.addImage(imgData, 'JPEG', x, y, imgWidth, imgHeight)
+
+                  // Add clickable link(s) over video thumbnail(s) if any
+                  if (videosInfo.length > 0) {
+                    // nodeWidthPx corresponds to the logical width we forced (1024)
+                    const scaleX = imgWidth / nodeWidthPx
+                    const scaleY = imgHeight / nodeHeightPx
+
+                    videosInfo.forEach((vInfo) => {
+                      if (!vInfo.url) return
+                      const linkX = x + vInfo.left * scaleX
+                      const linkY = y + vInfo.top * scaleY
+                      const linkW = vInfo.width * scaleX
+                      const linkH = vInfo.height * scaleY
+                      try {
+                        doc.link(linkX, linkY, linkW, linkH, { url: vInfo.url })
+                      } catch (e) {
+                        console.error('Error adding link to PDF:', e)
+                        // fallback: write URL under image
+                        doc.setTextColor(0, 0, 255)
+                        const txtY = y + imgHeight + 5
+                        doc.text(vInfo.url, x + 5, txtY)
+                      }
+                    })
+                  }
+                }
+
+                doc.save(`presentacion-${id || 'download'}.pdf`)
+                setExporting(false)
+              }}
+              size="medium"
+              disabled={exporting}
+              sx={{
+                background: 'linear-gradient(135deg,#e11d48 0%,#ef4444 100%)',
+                color: '#fff',
+                boxShadow: '0 6px 18px rgba(239,68,68,0.25)',
+              }}
+              aria-label="Descargar en PDF"
+            >
+              {exporting ? (
+                <CircularProgress size={20} sx={{ color: '#fff' }} />
+              ) : (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <path d="M14 2v6h6" />
+                  <text x="7" y="16" fill="#fff" fontSize="6" fontWeight="700">PDF</text>
+                </svg>
+              )}
+            </Fab>
+          </span>
+        </Tooltip>
+      </div>
+      <div className="mb-4 text-center">
+        
+      </div>
+
+    <div className="relative">
+  <div ref={slideBoxRef} className="max-w-3xl mx-auto relative px-2 sm:px-0">
+          {/* Floating nav buttons (icon-only) positioned relative to the slide box */}
+          <Tooltip title={isFirst ? 'Inicio' : 'Anterior'}>
+            <Fab
+              aria-label="Anterior"
+              onClick={() => setIndex((s) => Math.max(0, s - 1))}
+              size="medium"
+              disabled={isFirst}
+              sx={{
+                position: 'absolute',
+                left: { xs: 8, md: -12 },
+                top: '50%',
+                transform: 'translateY(-50%)',
+                zIndex: 1200,
+                background: 'linear-gradient(135deg,#4f46e5 0%,#06b6d4 100%)',
+                color: '#fff',
+                boxShadow: isFirst ? 'none' : '0 6px 18px rgba(79,70,229,0.35)',
+                width: { xs: 32, md: 44 },
+                height: { xs: 32, md: 44 },
+                opacity: isFirst ? 0.5 : 1,
+                cursor: isFirst ? 'not-allowed' : 'pointer',
+                '&:hover': isFirst ? {} : { boxShadow: '0 8px 22px rgba(6,182,212,0.25)', transform: 'translateY(-50%) scale(1.03)' },
+                borderRadius: '9999px',
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </Fab>
+          </Tooltip>
+
+          <Tooltip title={isLast ? 'Fin' : 'Siguiente'}>
+            <Fab
+              aria-label="Siguiente"
+              onClick={() => setIndex((s) => Math.min(slides.length - 1, s + 1))}
+              size="medium"
+              disabled={isLast}
+              sx={{
+                position: 'absolute',
+                right: { xs: 8, md: -12 },
+                top: '50%',
+                transform: 'translateY(-50%)',
+                zIndex: 1200,
+                background: 'linear-gradient(135deg,#ef4444 0%,#f97316 100%)',
+                color: '#fff',
+                boxShadow: isLast ? 'none' : '0 6px 18px rgba(244,63,94,0.35)',
+                width: { xs: 32, md: 44 },
+                height: { xs: 32, md: 44 },
+                opacity: isLast ? 0.5 : 1,
+                cursor: isLast ? 'not-allowed' : 'pointer',
+                '&:hover': isLast ? {} : { boxShadow: '0 8px 22px rgba(249,115,22,0.25)', transform: 'translateY(-50%) scale(1.03)' },
+                borderRadius: '9999px',
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </Fab>
+          </Tooltip>
+
+          <SlideViewClassic slide={slides[index]} index={index} metadata={metadata} visibility={visibility} totalSlides={slides.length} contentHeight={estimatedMaxHeight} />
+        </div>
+      </div>
+
+      {/* Hidden export area: render all slides for capture */}
+      <div ref={exportRef} style={{ position: 'absolute', left: -9999, top: 0, width: 1024 }} aria-hidden>
+        {slides.map((s, i) => (
+          <div key={`pdf-${i}`} style={{ width: '1024px', padding: '24px', boxSizing: 'border-box', background: '#f8fafc' }}>
+            <SlideViewClassic slide={s} index={i} metadata={metadata} visibility={visibility} totalSlides={slides.length} contentHeight={estimatedMaxHeight} />
+          </div>
+        ))}
+      </div>
+
+      {slides.length > 1 ? (
+        <div className="mt-4 px-2 sm:px-0 flex justify-center">
+          {/* viewport showing up to 5 slots, overflow hidden to hide scrollbar */}
+          <div
+            className="overflow-hidden"
+            style={{ width: cardWidth ? `${cardWidth * Math.min(5, slides.length)}px` : undefined }}
+          >
+            {/* inner track */}
+            <div
+              ref={thumbsRef}
+              className="flex"
+              style={{ width: cardWidth ? `${cardWidth * slides.length}px` : undefined, transform: cardWidth ? `translateX(-${trackTranslate})` : undefined, transition: 'transform 320ms ease' }}
+            >
+              {slides.map((s, i) => (
+                <button
+                  key={i}
+                  onClick={() => setIndex(i)}
+                  className={`flex-shrink-0 p-2 border rounded text-center transition-all ${i === index ? 'scale-105' : ''}`}
+                  style={{ width: cardWidth ? `${cardWidth}px` : undefined, background: i === index ? '#fff8dc' : undefined }}
+                  aria-current={i === index}
+                  title={s.title}
+                >
+                  <div className={`font-semibold leading-tight break-words`} style={{ fontSize: fontSizePx ? `${fontSizePx}px` : undefined, color: i === index ? '#111827' : undefined }}>{s.title}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
+    
+  )
+}
