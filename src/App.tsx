@@ -7,7 +7,7 @@ import GeneratorPage from './pages/GeneratorPage'
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/presentaciones-clase/">
       <div className="min-h-screen bg-gray-50 p-6">
 
         <main className="max-w-4xl mx-auto bg-white p-6 rounded shadow">

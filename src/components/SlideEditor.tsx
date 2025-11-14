@@ -7,18 +7,19 @@ type Props = {
   onChange?: (slides: Slide[]) => void;
 }
 
-export default function SlideEditor({ slides: initialSlides, onChange }: Props) {
-  const [slides, setSlides] = useState<Slide[]>(initialSlides || [])
+export default function SlideEditor({ slides, onChange }: Props) {
   // visibility state for images/videos per-slide; default false (deselected)
   const [imagesVisible, setImagesVisible] = useState<Record<number, boolean>>({})
   const [videosVisible, setVideosVisible] = useState<Record<number, boolean>>({})
 
   // note: visibility maps default to empty (all false). They remain local UI state and do not mutate slide data.
 
+  // This component is controlled: `slides` comes from props. Edits call onChange.
+
   function updateSlide(idx: number, changes: Partial<Slide>) {
-    const copy = slides.slice()
+    const base = slides || []
+    const copy = base.slice()
     copy[idx] = { ...copy[idx], ...changes }
-    setSlides(copy)
     onChange?.(copy)
   }
 
@@ -51,11 +52,11 @@ export default function SlideEditor({ slides: initialSlides, onChange }: Props) 
                 </div>
               </div>
               <button onClick={() => {
-                const copy = slides.slice()
+                const base = slides || []
+                const copy = base.slice()
                 const arr = copy[i].images ? [...copy[i].images] : []
                 arr.push('')
                 copy[i] = { ...copy[i], images: arr }
-                setSlides(copy)
                 onChange?.(copy)
               }} className="px-2 py-1 text-xs bg-gray-100 rounded">Agregar imagen</button>
             </div>
@@ -65,19 +66,19 @@ export default function SlideEditor({ slides: initialSlides, onChange }: Props) 
                 {s.images.map((img, ii) => (
                   <div key={ii} className="flex items-center gap-2">
                     <input value={img} onChange={e => {
-                      const copy = slides.slice()
+                      const base = slides || []
+                      const copy = base.slice()
                       const arr = copy[i].images ? [...copy[i].images!] : []
                       arr[ii] = e.target.value
                       copy[i] = { ...copy[i], images: arr }
-                      setSlides(copy)
                       onChange?.(copy)
                     }} className="flex-1 p-2 border rounded" />
                     <button onClick={() => {
-                      const copy = slides.slice()
+                      const base = slides || []
+                      const copy = base.slice()
                       const arr = copy[i].images ? [...copy[i].images!] : []
                       arr.splice(ii, 1)
                       copy[i] = { ...copy[i], images: arr.length ? arr : undefined }
-                      setSlides(copy)
                       onChange?.(copy)
                     }} className="px-2 py-1 bg-red-100 rounded">Eliminar</button>
                   </div>
@@ -112,11 +113,11 @@ export default function SlideEditor({ slides: initialSlides, onChange }: Props) 
                 </label>
               </div>
               <button onClick={() => {
-                const copy = slides.slice()
+                const base = slides || []
+                const copy = base.slice()
                 const arr = copy[i].videos ? [...copy[i].videos] : []
                 arr.push('')
                 copy[i] = { ...copy[i], videos: arr }
-                setSlides(copy)
                 onChange?.(copy)
               }} className="px-2 py-1 text-xs bg-gray-100 rounded">Agregar video</button>
             </div>
@@ -126,19 +127,19 @@ export default function SlideEditor({ slides: initialSlides, onChange }: Props) 
                 {s.videos.map((vid, ii) => (
                   <div key={ii} className="flex items-center gap-2">
                     <input value={vid} onChange={e => {
-                      const copy = slides.slice()
+                      const base = slides || []
+                      const copy = base.slice()
                       const arr = copy[i].videos ? [...copy[i].videos!] : []
                       arr[ii] = e.target.value
                       copy[i] = { ...copy[i], videos: arr }
-                      setSlides(copy)
                       onChange?.(copy)
                     }} className="flex-1 p-2 border rounded" />
                     <button onClick={() => {
-                      const copy = slides.slice()
+                      const base = slides || []
+                      const copy = base.slice()
                       const arr = copy[i].videos ? [...copy[i].videos!] : []
                       arr.splice(ii, 1)
                       copy[i] = { ...copy[i], videos: arr.length ? arr : undefined }
-                      setSlides(copy)
                       onChange?.(copy)
                     }} className="px-2 py-1 bg-red-100 rounded">Eliminar</button>
                   </div>

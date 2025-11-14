@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 export default function HomePage() {
   const [id, setId] = useState('')
@@ -19,15 +19,15 @@ export default function HomePage() {
           aria-label="id-presentacion"
           value={id}
           onChange={(e) => setId(e.target.value)}
-          placeholder="Introduce un id (ej: examen-1)"
+          placeholder="Introduce un id (ej: 1763052540XXX)"
           className="border rounded px-3 py-2 flex-1"
         />
         <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">Ir</button>
       </form>
 
-      <div className="mt-6">
+      {/* <div className="mt-6">
         <Link to="/generador" className="text-blue-600 underline">Ir al generador de presentaciones</Link>
-      </div>
+      </div> */}
     </div>
   )
 }
