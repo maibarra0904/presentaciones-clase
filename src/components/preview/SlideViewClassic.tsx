@@ -9,9 +9,9 @@ type Meta = { subject?: string; teacher?: string; logo?: string; unit?: string }
 
 type Visibility = { images: Record<number, boolean>; videos: Record<number, boolean> }
 
-type Props = { slide: Slide; index: number; metadata?: Meta; visibility?: Visibility; totalSlides?: number; contentHeight?: number }
+type Props = { slide: Slide; index: number; metadata?: Meta; visibility?: Visibility; totalSlides?: number; contentHeight?: number; isMobile?: boolean }
 
-export default function SlideViewClassic({ slide, index, metadata, visibility, totalSlides, contentHeight }: Props) {
+export default function SlideViewClassic({ slide, index, metadata, visibility, totalSlides, contentHeight, isMobile = false }: Props) {
   const [openVideo, setOpenVideo] = useState<string | null>(null)
 
   // determine if slide is text-only (no visible images or videos)
@@ -23,31 +23,33 @@ export default function SlideViewClassic({ slide, index, metadata, visibility, t
   if (index === 0) {
     // Cover: keep same header/footer structure but without texts so heights match other slides
     return (
-      <div className="w-full max-w-3xl mx-auto rounded-lg mb-6 overflow-hidden shadow-xl" style={{ background: 'linear-gradient(135deg, rgba(246,249,255,1) 0%, rgba(240,248,255,1) 100%)' }}>
+      <div className={`w-full ${isMobile ? '' : 'max-w-3xl mx-auto'} rounded-lg mb-6 overflow-hidden shadow-xl`} style={{ background: 'linear-gradient(135deg, rgba(246,249,255,1) 0%, rgba(240,248,255,1) 100%)' }}>
         <div className="p-6 md:p-8">
           {/* Header placeholders to preserve spacing */}
-          <div className="flex items-center justify-between mb-4" aria-hidden>
-            <div className="text-sm text-blue-700 font-medium">{''}</div>
-            <div className="text-center text-sm text-gray-700 font-medium">{''}</div>
-            <div>{/* keep space for logo slot */}</div>
+          <div className={isMobile ? 'flex flex-col items-start gap-1 mb-4' : 'flex items-center justify-between mb-4'} aria-hidden>
+            {/* On mobile we hide the small header placeholders and will render subject/unit in the main area for the cover */}
+            <div className={isMobile ? 'text-base font-semibold text-blue-700' : 'text-sm text-blue-700 font-medium'}>{''}</div>
+            <div className={isMobile ? 'text-sm text-gray-700 font-medium' : 'text-center text-sm text-gray-700 font-medium'}>{''}</div>
+            {!isMobile ? <div>{/* keep space for logo slot */}</div> : null}
           </div>
 
           <div
-            className="bg-white/70 backdrop-blur-sm rounded-lg p-6 md:px-12 md:py-12 shadow-inner text-center flex flex-col items-center justify-center"
+            className={`bg-white/70 backdrop-blur-sm rounded-lg ${isMobile ? 'p-4' : 'p-6 md:px-12 md:py-12'} shadow-inner text-center flex flex-col items-center justify-center`}
             style={contentHeight ? { minHeight: `${contentHeight}px` } : undefined}
           >
-            {/* Carátula content: logo centered then larger subject/unit/teacher texts */}
-            {metadata?.logo ? (
+            {/* Carátula content: on mobile hide logo and teacher and show subject/unit stacked for readability */}
+            {!isMobile && metadata?.logo ? (
               <img src={metadata.logo} alt="logo" className="mx-auto w-40 h-40 md:w-48 md:h-48 object-contain mb-6" />
             ) : null}
             {metadata?.subject ? (
-              <div className="text-4xl md:text-5xl font-extrabold mb-3 text-slate-800 leading-tight">{metadata.subject}</div>
+              <div className={`${isMobile ? 'text-3xl text-center' : 'text-4xl md:text-5xl'} font-extrabold mb-3 text-slate-800 leading-tight`}>{metadata.subject}</div>
             ) : null}
             {metadata?.unit ? (
-              <div className="text-2xl md:text-3xl text-gray-700 mb-3">{metadata.unit}</div>
+              <div className={`${isMobile ? 'text-xl text-center' : 'text-2xl md:text-3xl'} text-gray-700 mb-3`}>{metadata.unit}</div>
             ) : null}
-            {metadata?.teacher ? (
-              <div className="text-lg md:text-xl text-gray-600">{`Docente: ${metadata.teacher}`}</div>
+            {/* hide teacher on mobile as requested */}
+            {!isMobile && metadata?.teacher ? (
+              <div className={`${isMobile ? 'text-sm' : 'text-lg md:text-xl'} text-gray-600`}>{`Docente: ${metadata.teacher}`}</div>
             ) : null}
           </div>
 
@@ -64,17 +66,20 @@ export default function SlideViewClassic({ slide, index, metadata, visibility, t
   }
 
   return (
-    <div className="w-full max-w-3xl mx-auto rounded-lg mb-6 overflow-hidden shadow-xl" style={{ background: 'linear-gradient(135deg, rgba(246,249,255,1) 0%, rgba(240,248,255,1) 100%)' }}>
-      <div className="p-6 md:p-8">
-        <div className="flex items-center justify-between mb-4">
-          <div className="text-sm text-blue-700 font-medium">{metadata?.subject}</div>
-          <div className="text-center text-sm text-gray-700 font-medium">{metadata?.unit}</div>
-          <div>{metadata?.logo ? <img src={metadata.logo} alt="logo" className="w-10 h-10 object-contain rounded" /> : null}</div>
+    <div className={`w-full ${isMobile ? '' : 'max-w-3xl mx-auto'} rounded-lg mb-6 overflow-hidden shadow-xl`} style={{ background: 'linear-gradient(135deg, rgba(246,249,255,1) 0%, rgba(240,248,255,1) 100%)' }}>
+      <div className={isMobile ? 'p-4' : 'p-6 md:p-8'}>
+        <div className={isMobile ? 'flex flex-col items-start gap-1 mb-4' : 'flex items-center justify-between mb-4'}>
+          <div className={isMobile ? 'text-base font-semibold text-blue-700' : 'text-sm text-blue-700 font-medium'}>{metadata?.subject}</div>
+          <div className={isMobile ? 'text-sm text-gray-700 font-medium' : 'text-center text-sm text-gray-700 font-medium'}>{metadata?.unit}</div>
+          {isMobile && metadata?.teacher ? (
+            <div className="text-sm text-gray-600">{`Docente: ${metadata.teacher}`}</div>
+          ) : null}
+          {!isMobile ? <div>{metadata?.logo ? <img src={metadata.logo} alt="logo" className="w-10 h-10 object-contain rounded" /> : null}</div> : null}
         </div>
 
-  <div className={`bg-white/70 backdrop-blur-sm rounded-lg p-6 shadow-inner ${isTextOnly ? 'flex flex-col items-center justify-center text-center' : ''}`} style={contentHeight ? { minHeight: `${contentHeight}px` } : undefined}>
+  <div className={`bg-white/70 backdrop-blur-sm rounded-lg ${isMobile ? 'p-4' : 'p-6'} shadow-inner ${isTextOnly ? 'flex flex-col items-center justify-center text-center' : ''}`} style={contentHeight ? { minHeight: `${contentHeight}px` } : undefined}>
     {/* Title stays centered always; increase size when slide is text-only to reduce empty space */}
-    <h2 className={`${isTextOnly ? 'text-3xl md:text-4xl' : 'text-2xl md:text-3xl'} font-extrabold mb-4 text-center text-slate-800`}>{slide.title}</h2>
+    <h2 className={`${isTextOnly ? (isMobile ? 'text-2xl' : 'text-3xl') + ' md:text-4xl' : (isMobile ? 'text-xl' : 'text-2xl') + ' md:text-3xl'} font-extrabold mb-4 text-center text-slate-800`}>{slide.title}</h2>
 
     {/* If there are images and the visibility flag is true and position is left/right, render side-by-side on md+; else render content then images below centered */}
           {slide.images && slide.images.length > 0 && (visibility?.images?.[index]) && (slide.imagesPosition === 'left' || slide.imagesPosition === 'right') ? (
@@ -92,7 +97,7 @@ export default function SlideViewClassic({ slide, index, metadata, visibility, t
               ) : null}
 
               <div className="md:flex-1">
-                <p className={`${isTextOnly ? 'text-lg md:text-xl text-slate-700' : 'text-slate-600'} leading-relaxed whitespace-pre-line`}>{slide.content}</p>
+                <p className={`${isTextOnly ? (isMobile ? 'text-sm' : 'text-lg') + ' md:text-xl' : 'text-slate-600'} leading-relaxed whitespace-pre-line`}>{slide.content}</p>
               </div>
 
               {slide.imagesPosition === 'right' ? (
@@ -109,7 +114,7 @@ export default function SlideViewClassic({ slide, index, metadata, visibility, t
             </div>
           ) : (
             <div>
-              <p className={`${isTextOnly ? 'text-lg md:text-xl text-slate-700' : 'text-slate-600'} leading-relaxed whitespace-pre-line`}>{slide.content}</p>
+              <p className={`${isTextOnly ? (isMobile ? 'text-sm' : 'text-lg') + ' md:text-xl' : 'text-slate-600'} leading-relaxed whitespace-pre-line`}>{slide.content}</p>
               {/* images below, centered */}
               {slide.images && slide.images.length > 0 && (visibility?.images?.[index]) && (
                 <div className="mt-4 flex justify-center gap-3">
@@ -174,10 +179,12 @@ export default function SlideViewClassic({ slide, index, metadata, visibility, t
             </IconButton>
           </DialogContent>
         </Dialog>
-      {/* Footer: teacher name left aligned */}
+      {/* Footer: show page counter always; on desktop also show teacher on the left */}
       <div className="mt-6 pt-4 border-t border-gray-100">
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-600">{metadata?.teacher ? `Docente: ${metadata.teacher}` : ''}</div>
+        <div className={isMobile ? 'flex items-center justify-center' : 'flex items-center justify-between'}>
+          {!isMobile ? (
+            <div className="text-sm text-gray-600">{metadata?.teacher ? `Docente: ${metadata.teacher}` : ''}</div>
+          ) : <div />}
           <div className="text-sm text-gray-600">{index + 1}{typeof totalSlides === 'number' ? `/${totalSlides}` : ''}</div>
         </div>
       </div>
