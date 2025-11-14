@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import 'katex/dist/katex.min.css'
 import type { Slide } from '../../services/grok'
 import { toYouTubeEmbed, getYouTubeThumbnail } from '../../services/media'
+import { tokenizeTextWithMath } from '../../services/latex'
 import Dialog from '@mui/material/Dialog'
 import DialogContent from '@mui/material/DialogContent'
 import IconButton from '@mui/material/IconButton'
@@ -97,7 +99,15 @@ export default function SlideViewClassic({ slide, index, metadata, visibility, t
               ) : null}
 
               <div className="md:flex-1">
-                <p className={`${isTextOnly ? (isMobile ? 'text-sm' : 'text-lg') + ' md:text-xl' : 'text-slate-600'} leading-relaxed whitespace-pre-line`}>{slide.content}</p>
+                <div className={`${isTextOnly ? (isMobile ? 'text-sm' : 'text-lg') + ' md:text-xl' : 'text-slate-600'} leading-relaxed`}>
+                  {tokenizeTextWithMath(slide.content).map((seg, i) => (
+                    seg.type === 'text' ? (
+                      <span key={i} dangerouslySetInnerHTML={{ __html: seg.html }} />
+                    ) : (
+                      <span key={i} className={seg.display ? 'katex-display' : 'katex-inline'} dangerouslySetInnerHTML={{ __html: seg.html }} />
+                    )
+                  ))}
+                </div>
               </div>
 
               {slide.imagesPosition === 'right' ? (
@@ -114,7 +124,15 @@ export default function SlideViewClassic({ slide, index, metadata, visibility, t
             </div>
           ) : (
             <div>
-              <p className={`${isTextOnly ? (isMobile ? 'text-sm' : 'text-lg') + ' md:text-xl' : 'text-slate-600'} leading-relaxed whitespace-pre-line`}>{slide.content}</p>
+              <div className={`${isTextOnly ? (isMobile ? 'text-sm' : 'text-lg') + ' md:text-xl' : 'text-slate-600'} leading-relaxed`}>
+                {tokenizeTextWithMath(slide.content).map((seg, i) => (
+                  seg.type === 'text' ? (
+                    <span key={i} dangerouslySetInnerHTML={{ __html: seg.html }} />
+                  ) : (
+                    <span key={i} className={seg.display ? 'katex-display' : 'katex-inline'} dangerouslySetInnerHTML={{ __html: seg.html }} />
+                  )
+                ))}
+              </div>
               {/* images below, centered */}
               {slide.images && slide.images.length > 0 && (visibility?.images?.[index]) && (
                 <div className="mt-4 flex justify-center gap-3">
