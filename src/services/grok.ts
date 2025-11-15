@@ -1,6 +1,6 @@
 // Groq service adapted from 29-guia-estudio
 // Provides generateSlides(topic, slides, style, apiKey?) -> Slide[]
-export type Slide = { title: string; content: string; images?: string[]; videos?: string[]; imagesPosition?: 'left' | 'right' };
+export type Slide = { title: string; content: string; images?: string[]; videos?: string[]; web?: string[]; imagesPosition?: 'left' | 'right' };
 
 type GenerateParams = { topic: string; slides: number; style: 'text' | 'images' | 'advanced'; apiKey?: string };
 
@@ -12,7 +12,7 @@ export async function generateSlides({ topic, slides, style, apiKey }: GenerateP
     const generateStub = (): Slide[] => {
     const out: Slide[] = [];
     for (let i = 1; i <= slides; i++) {
-  out.push({ title: `${topic} — Diapositiva ${i}`, content: `Contenido de ejemplo para "${topic}" en la diapositiva ${i}. Puedes editar este texto más tarde.`, images: style !== 'text' ? [`https://via.placeholder.com/600x300?text=${encodeURIComponent(topic + ' ' + i)}`] : undefined, videos: undefined, imagesPosition: undefined });
+  out.push({ title: `${topic} — Diapositiva ${i}`, content: `Contenido de ejemplo para "${topic}" en la diapositiva ${i}. Puedes editar este texto más tarde.`, images: style !== 'text' ? [`https://via.placeholder.com/600x300?text=${encodeURIComponent(topic + ' ' + i)}`] : undefined, videos: undefined, web: style !== 'text' ? [`https://example.com/${encodeURIComponent(topic)}-${i}`] : undefined, imagesPosition: undefined });
     }
     return out;
   };
@@ -84,11 +84,12 @@ export async function generateSlides({ topic, slides, style, apiKey }: GenerateP
     }
 
   const slidesParsed: Array<Record<string, unknown>> = Array.isArray(parsed) ? parsed as Array<Record<string, unknown>> : [parsed as Record<string, unknown>];
-  const normalized = slidesParsed.map((s, idx) => ({
+    const normalized = slidesParsed.map((s, idx) => ({
     title: (s && s['title']) ? String(s['title']) : `Diapositiva ${idx+1}`,
     content: (s && s['content']) ? String(s['content']) : (s && s['text']) ? String(s['text']) : '',
     images: Array.isArray(s['images']) ? (s['images'] as Array<unknown>).map(String) : undefined,
     videos: Array.isArray(s['videos']) ? (s['videos'] as Array<unknown>).map(String) : (s && s['video']) ? [String(s['video'])] : undefined,
+    web: Array.isArray(s['web']) ? (s['web'] as Array<unknown>).map(String) : Array.isArray(s['website']) ? (s['website'] as Array<unknown>).map(String) : Array.isArray(s['sites']) ? (s['sites'] as Array<unknown>).map(String) : (s && s['web']) ? [String(s['web'])] : undefined,
   imagesPosition: (s && (s['imagesPosition'] === 'left' || s['imagesPosition'] === 'right')) ? String(s['imagesPosition']) as 'left' | 'right' : undefined,
   }));
 
@@ -100,7 +101,7 @@ export async function generateSlides({ topic, slides, style, apiKey }: GenerateP
   const missing = slides - normalized.length;
   for (let j = 1; j <= missing; j++) {
     const i = normalized.length + j;
-  normalized.push({ title: `${topic} — Diapositiva ${i}`, content: `Contenido de ejemplo para "${topic}" en la diapositiva ${i}. Puedes editar este texto más tarde.`, images: style !== 'text' ? [`https://via.placeholder.com/600x300?text=${encodeURIComponent(topic + ' ' + i)}`] : undefined, videos: undefined, imagesPosition: undefined });
+  normalized.push({ title: `${topic} — Diapositiva ${i}`, content: `Contenido de ejemplo para "${topic}" en la diapositiva ${i}. Puedes editar este texto más tarde.`, images: style !== 'text' ? [`https://via.placeholder.com/600x300?text=${encodeURIComponent(topic + ' ' + i)}`] : undefined, videos: undefined, web: style !== 'text' ? [`https://example.com/${encodeURIComponent(topic)}-${i}`] : undefined, imagesPosition: undefined });
   }
 
   return normalized;

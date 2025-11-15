@@ -6,15 +6,17 @@ import { tokenizeTextWithMath } from '../../services/latex'
 import Dialog from '@mui/material/Dialog'
 import DialogContent from '@mui/material/DialogContent'
 import IconButton from '@mui/material/IconButton'
+import websiteImg from '../../assets/website.png'
 
 type Meta = { subject?: string; teacher?: string; logo?: string; unit?: string }
 
-type Visibility = { images: Record<number, boolean>; videos: Record<number, boolean> }
+type Visibility = { images: Record<number, boolean>; videos: Record<number, boolean>; web?: Record<number, boolean> }
 
 type Props = { slide: Slide; index: number; metadata?: Meta; visibility?: Visibility; totalSlides?: number; contentHeight?: number; isMobile?: boolean }
 
 export default function SlideViewClassic({ slide, index, metadata, visibility, totalSlides, contentHeight, isMobile = false }: Props) {
   const [openVideo, setOpenVideo] = useState<string | null>(null)
+  const [openWebsite, setOpenWebsite] = useState<string | null>(null)
 
   // determine if slide is text-only (no visible images or videos)
   const hasVisibleImages = !!(slide.images && slide.images.length > 0 && visibility?.images?.[index])
@@ -148,6 +150,35 @@ export default function SlideViewClassic({ slide, index, metadata, visibility, t
                       ))}
                 </div>
               )}
+
+              {/* Website placeholders: show representative image and make clickable */}
+              {slide.web && slide.web.length > 0 && (visibility?.web?.[index]) && (
+                <div className="mt-4 flex justify-center gap-3">
+                  {slide.web.map((w, wi) => {
+                    const safeUrl = w && w.startsWith('http') ? w : `https://${w}`
+                    const mshot = `https://s.wordpress.com/mshots/v1/${encodeURIComponent(safeUrl)}?w=1200`
+                    return (
+                      <div key={wi} className="w-full max-w-md rounded overflow-hidden bg-gray-50">
+                        <button type="button" onClick={() => setOpenWebsite(safeUrl)} className="block w-full h-36 md:h-44 lg:h-52 relative">
+                          <img
+                            src={mshot}
+                            alt={safeUrl}
+                            className="absolute inset-0 w-full h-full object-cover"
+                            onError={(e) => { try { (e.target as HTMLImageElement).src = websiteImg } catch { console.log('fallas')} }}
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div className="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1f2937" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                                <polygon points="5 3 19 12 5 21 5 3" fill="#1f2937" />
+                              </svg>
+                            </div>
+                          </div>
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
           )}
 
@@ -193,6 +224,25 @@ export default function SlideViewClassic({ slide, index, metadata, visibility, t
               />
             </div>
             <IconButton onClick={() => setOpenVideo(null)} aria-label="Cerrar" sx={{ position: 'absolute', right: 8, top: 8, color: '#fff' }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </IconButton>
+          </DialogContent>
+        </Dialog>
+        {/* Website modal */}
+        <Dialog open={!!openWebsite} onClose={() => setOpenWebsite(null)} maxWidth="lg" fullWidth>
+          <DialogContent sx={{ p: 0, backgroundColor: '#000' }}>
+            <div style={{ position: 'relative', paddingTop: '56.25%' }}>
+              <iframe
+                src={openWebsite || ''}
+                title="website-player"
+                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+              />
+            </div>
+            <IconButton onClick={() => setOpenWebsite(null)} aria-label="Cerrar" sx={{ position: 'absolute', right: 8, top: 8, color: '#fff' }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />

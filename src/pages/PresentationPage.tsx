@@ -69,11 +69,13 @@ export default function PresentationPage() {
   const visibility = useMemo(() => {
     const images: Record<number, boolean> = {}
     const videos: Record<number, boolean> = {}
+    const web: Record<number, boolean> = {}
     slides.forEach((_, i) => {
       images[i] = true
       videos[i] = true
+      web[i] = true
     })
-    return { images, videos }
+    return { images, videos, web }
   }, [slides])
 
   // compute card width so exactly 5 cards fit in the visible area (or fewer if slides < 5)
