@@ -131,7 +131,8 @@ export default function PresentationPage() {
   }
 
   return (
-    // remove horizontal page padding on mobile (px-0) but keep it on sm+
+    <>
+    {/* remove horizontal page padding on mobile (px-0) but keep it on sm+ */}
     <div className="px-0 sm:px-6">
       {!isMobile && (
         <div className="flex items-center justify-end gap-2 mb-3">
@@ -361,6 +362,35 @@ export default function PresentationPage() {
         </div>
       ) : null}
     </div>
-    
+    {/* Mobile floating page bubble: fixed at bottom-right */}
+    {isMobile && slides.length > 0 ? (
+      <Fab
+        aria-label="Página"
+        sx={{
+          position: 'fixed',
+          right: { xs: 12 },
+          bottom: { xs: 12 },
+          zIndex: 1300,
+          // moderno: teal -> indigo gradient
+          background: 'linear-gradient(135deg,#06b6d4 0%,#6366f1 100%)',
+          boxShadow: '0 6px 18px rgba(99,102,241,0.22)',
+          width: 40,
+          height: 40,
+          padding: 0,
+          borderRadius: '9999px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxSizing: 'border-box',
+        }}
+      >
+        {/* Fracción: numerador (más grande) y denominador (más pequeño), separados y con colores consistentes */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1, userSelect: 'none' }}>
+          <div style={{ fontWeight: 800, fontSize: 15, color: 'rgba(255,255,255,0.98)', lineHeight: 1 }}>{index + 1}</div>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', lineHeight: 1, marginTop: 2 }}>{slides.length}</div>
+        </div>
+      </Fab>
+    ) : null}
+    </>
   )
 }

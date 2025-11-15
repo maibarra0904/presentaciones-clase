@@ -59,7 +59,10 @@ export default function SlideViewClassic({ slide, index, metadata, visibility, t
           <div className="mt-6 pt-4 border-t border-gray-100">
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-600">{''}</div>
-              <div className="text-sm text-gray-600">{index + 1}{typeof totalSlides === 'number' ? `/${totalSlides}` : ''}</div>
+              {/* hide inline page counter on mobile; presentation page will render a floating bubble instead */}
+              {!isMobile ? (
+                <div className="text-sm text-gray-600">{index + 1}{typeof totalSlides === 'number' ? `/${totalSlides}` : ''}</div>
+              ) : <div />}
             </div>
           </div>
         </div>
@@ -203,7 +206,10 @@ export default function SlideViewClassic({ slide, index, metadata, visibility, t
           {!isMobile ? (
             <div className="text-sm text-gray-600">{metadata?.teacher ? `Docente: ${metadata.teacher}` : ''}</div>
           ) : <div />}
-          <div className="text-sm text-gray-600">{index + 1}{typeof totalSlides === 'number' ? `/${totalSlides}` : ''}</div>
+          {/* hide inline page counter on mobile; use floating bubble in PresentationPage */}
+          {!isMobile ? (
+            <div className="text-sm text-gray-600">{index + 1}{typeof totalSlides === 'number' ? `/${totalSlides}` : ''}</div>
+          ) : <div />}
         </div>
       </div>
     </div>
