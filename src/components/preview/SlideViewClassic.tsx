@@ -3,6 +3,7 @@ import 'katex/dist/katex.min.css'
 import type { Slide } from '../../services/grok'
 import { toYouTubeEmbed, getYouTubeThumbnail } from '../../services/media'
 import { tokenizeTextWithMath } from '../../services/latex'
+import { tokenizeTextWithCode, type Segment as CodeTextSegment, type CodeSegment } from '../../services/code'
 import Dialog from '@mui/material/Dialog'
 import DialogContent from '@mui/material/DialogContent'
 import IconButton from '@mui/material/IconButton'
@@ -16,6 +17,8 @@ type Props = { slide: Slide; index: number; metadata?: Meta; visibility?: Visibi
 
 export default function SlideViewClassic({ slide, index, metadata, visibility, totalSlides, contentHeight, isMobile = false }: Props) {
   const [openVideo, setOpenVideo] = useState<string | null>(null)
+  const [openCode, setOpenCode] = useState<string | null>(null)
+  const [openCodeLang, setOpenCodeLang] = useState<string | undefined>(undefined)
   const [openWebsite, setOpenWebsite] = useState<string | null>(null)
 
   // determine if slide is text-only (no visible images or videos)
@@ -105,13 +108,29 @@ export default function SlideViewClassic({ slide, index, metadata, visibility, t
 
               <div className="md:flex-1">
                 <div className={`${isTextOnly ? (isMobile ? 'text-sm' : 'text-lg') + ' md:text-xl' : 'text-slate-600'} leading-relaxed`}>
-                  {tokenizeTextWithMath(slide.content).map((seg, i) => (
-                    seg.type === 'text' ? (
-                      <span key={i} dangerouslySetInnerHTML={{ __html: seg.html }} />
-                    ) : (
-                      <span key={i} className={seg.display ? 'katex-display' : 'katex-inline'} dangerouslySetInnerHTML={{ __html: seg.html }} />
-                    )
-                  ))}
+                  {tokenizeTextWithCode(slide.content).map((seg: CodeTextSegment, i) => {
+                    // seg can be code segments or text/math segments from the latex tokenizer
+                    if (seg.type === 'code') {
+                      const cseg = seg as CodeSegment
+                      const lines = (cseg.code || '').split('\n')
+                      const preview = lines.slice(0, 5)
+                      return (
+                        <div key={`code-${i}`} className="my-3">
+                          <pre className="bg-gray-900 text-white p-3 rounded text-sm overflow-auto whitespace-pre-wrap">
+                            {preview.map((l: string, li: number) => <div key={li}>{l}</div>)}
+                          </pre>
+                          {lines.length > 5 ? (
+                            <div className="mt-2 text-right">
+                              <button onClick={() => { setOpenCode(cseg.code); setOpenCodeLang(cseg.lang) }} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">Ver más</button>
+                            </div>
+                          ) : null}
+                        </div>
+                      )
+                    }
+                    // otherwise it's a math/text segment from tokenizeTextWithMath
+                    if (seg.type === 'text') return <span key={i} dangerouslySetInnerHTML={{ __html: seg.html }} />
+                    return <span key={i} className={seg.display ? 'katex-display' : 'katex-inline'} dangerouslySetInnerHTML={{ __html: seg.html }} />
+                  })}
                 </div>
               </div>
 
@@ -130,13 +149,27 @@ export default function SlideViewClassic({ slide, index, metadata, visibility, t
           ) : (
             <div>
               <div className={`${isTextOnly ? (isMobile ? 'text-sm' : 'text-lg') + ' md:text-xl' : 'text-slate-600'} leading-relaxed`}>
-                {tokenizeTextWithMath(slide.content).map((seg, i) => (
-                  seg.type === 'text' ? (
-                    <span key={i} dangerouslySetInnerHTML={{ __html: seg.html }} />
-                  ) : (
-                    <span key={i} className={seg.display ? 'katex-display' : 'katex-inline'} dangerouslySetInnerHTML={{ __html: seg.html }} />
-                  )
-                ))}
+                {tokenizeTextWithCode(slide.content).map((seg: CodeTextSegment, i) => {
+                  if (seg.type === 'code') {
+                    const cseg = seg as CodeSegment
+                    const lines = (cseg.code || '').split('\n')
+                    const preview = lines.slice(0, 5)
+                    return (
+                      <div key={`code2-${i}`} className="my-3">
+                        <pre className="bg-gray-900 text-white p-3 rounded text-sm overflow-auto whitespace-pre-wrap">
+                          {preview.map((l: string, li: number) => <div key={li}>{l}</div>)}
+                        </pre>
+                        {lines.length > 5 ? (
+                          <div className="mt-2 text-right">
+                            <button onClick={() => { setOpenCode(cseg.code); setOpenCodeLang(cseg.lang) }} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">Ver más</button>
+                          </div>
+                        ) : null}
+                      </div>
+                    )
+                  }
+                  if (seg.type === 'text') return <span key={i} dangerouslySetInnerHTML={{ __html: seg.html }} />
+                  return <span key={i} className={seg.display ? 'katex-display' : 'katex-inline'} dangerouslySetInnerHTML={{ __html: seg.html }} />
+                })}
               </div>
               {/* images below, centered */}
               {slide.images && slide.images.length > 0 && (visibility?.images?.[index]) && (
@@ -229,6 +262,26 @@ export default function SlideViewClassic({ slide, index, metadata, visibility, t
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
             </IconButton>
+          </DialogContent>
+        </Dialog>
+        {/* Code modal */}
+        <Dialog open={!!openCode} onClose={() => setOpenCode(null)} maxWidth="lg" fullWidth>
+          <DialogContent sx={{ p: 2 }}>
+            <div className="flex items-center justify-between mb-2">
+              <div className="font-medium">Código{openCodeLang ? ` — ${openCodeLang}` : ''}</div>
+              <div>
+                <button onClick={() => { if (openCode) { navigator.clipboard?.writeText(openCode).catch(()=>{}) } }} className="mr-2 px-3 py-1 text-sm bg-gray-100 rounded">Copiar</button>
+                <IconButton onClick={() => setOpenCode(null)} aria-label="Cerrar">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </IconButton>
+              </div>
+            </div>
+            <div style={{ maxHeight: '60vh', overflow: 'auto' }}>
+              <pre className="bg-gray-900 text-white p-4 rounded text-sm whitespace-pre" style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Helvetica Neue", monospace' }}>{openCode}</pre>
+            </div>
           </DialogContent>
         </Dialog>
         {/* Website modal */}

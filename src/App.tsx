@@ -2,6 +2,7 @@
 import './App.css'
 import { BrowserRouter,  Routes, Route } from 'react-router-dom'
 import PresentationPage from './pages/PresentationPage'
+import PreviewPage from './pages/PreviewPage'
 import HomePage from './pages/HomePage'
 import GeneratorPage from './pages/GeneratorPage'
 import Header from './components/Header'
@@ -18,6 +19,7 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/generador" element={<GeneratorPage />} />
             <Route path="/presentacion/:id" element={<PresentationPage />} />
+            <Route path="/preview" element={<PreviewPage />} />
           </Routes>
         </main>
       </div>

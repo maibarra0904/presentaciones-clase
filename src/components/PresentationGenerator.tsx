@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from 'react'
+import { useState, useEffect } from 'react'
 // import SlideStyleSelector from './SlideStyleSelector'
 import SlideEditor from './SlideEditor'
 import { generateSlides } from '../services/grok'
@@ -84,7 +84,7 @@ export default function PresentationGenerator() {
   const [hasSavedKey, setHasSavedKey] = useState<boolean>(() => Boolean(typeof localStorage !== 'undefined' && localStorage.getItem('groqApiKey')))
   const [editingKey, setEditingKey] = useState<boolean>(false)
 
-  const VistaPrevia = lazy(() => import('./preview/VistaPrevia'))
+  // La vista previa ahora está disponible en /preview y toma los datos desde localStorage
 
   async function handleGenerate() {
     // validation: at least 2 non-empty topics
@@ -444,13 +444,9 @@ export default function PresentationGenerator() {
             } catch (e) { console.warn('No se pudo persistir slides tras edición', e) }
           }} />
           
-            <div className="mt-6">
-              <Suspense fallback={<div className="p-4 text-sm text-gray-500">Cargando vista previa...</div>}>
-                <VistaPrevia slides={slides} metadata={{ subject, teacher, logo: logoUrl, unit, topics }} />
-              </Suspense>
-            </div>
+            {/* La vista previa se abre en /preview y lee los datos desde localStorage */}
           
-          <div className="mt-4">
+          <div className="mt-4 flex items-center gap-3">
             <button onClick={() => {
               try {
                 // generate a numeric id at the moment of download
@@ -490,6 +486,8 @@ export default function PresentationGenerator() {
                 URL.revokeObjectURL(url)
               } catch (e) { console.error('Error durante la descarga JSON', e); alert('No se pudo generar el archivo JSON') }
             }} className="px-3 py-2 bg-green-600 text-white rounded">Descargar JSON</button>
+
+            <button onClick={() => { window.location.href = '/preview' }} className="px-3 py-2 bg-blue-600 text-white rounded">Vista Previa</button>
           </div>
         </div>
       )}
