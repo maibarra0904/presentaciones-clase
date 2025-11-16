@@ -487,7 +487,7 @@ export default function PresentationGenerator() {
               } catch (e) { console.error('Error durante la descarga JSON', e); alert('No se pudo generar el archivo JSON') }
             }} className="px-3 py-2 bg-green-600 text-white rounded">Descargar JSON</button>
 
-            <button onClick={() => { window.location.href = '/preview' }} className="px-3 py-2 bg-blue-600 text-white rounded">Vista Previa</button>
+            <a href="/preview" target="_blank" rel="noopener noreferrer" className="px-3 py-2 bg-blue-600 text-white rounded inline-block text-center">Vista Previa</a>
           </div>
         </div>
       )}

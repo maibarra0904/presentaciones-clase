@@ -1114,6 +1114,210 @@ const PRESENTATIONS =
       ]
     }
   ]
+},
+  "1763299580324": {
+  "metadata": {
+    "id": 1763299580324,
+    "subject": "Investigación de Operaciones",
+    "teacher": "Ing. Mario Ibarra",
+    "logo": "https://res.cloudinary.com/dlyfncohn/image/upload/v1763085172/urlnext-images/ekjqpffg9sdky1hghdsz.jpg",
+    "unit": "Unidad 1. TOMA DE DECISIONES EN LA INVESTIGACIÓN DE OPERACIONES",
+    "topics": [
+      "Conceptos básicos y elementos de la Investigación de Operaciones",
+      "Tipos de modelos de Investigación de Operaciones",
+      "Fases de un estudio de Investigación de Operaciones",
+      "Modelo de Decisión Simple"
+    ],
+    "slidesCount": 28,
+    "style": "text"
+  },
+  "slides": [
+    {
+      "title": "Investigación de Operaciones",
+      "content": "Unidad 1. TOMA DE DECISIONES EN LA INVESTIGACIÓN DE OPERACIONES",
+      "images": [
+        "https://res.cloudinary.com/dlyfncohn/image/upload/v1763085172/urlnext-images/ekjqpffg9sdky1hghdsz.jpg"
+      ]
+    },
+    {
+      "title": "Conceptos básicos",
+      "content": "La Investigación de Operaciones (IO) es una disciplina que aplica métodos cuantitativos para optimizar la toma de decisiones en sistemas complejos. Se basa en modelos matemáticos, simulación y análisis estadístico para asignar recursos limitados de manera eficiente.",
+      "images": [
+        "https://economipedia.com/wp-content/uploads/Investigacion-de-operaciones.png"
+      ],
+      "imagesPosition": "left"
+    },
+    {
+      "title": "Elementos de un modelo",
+      "content": "Un modelo de IO incluye:\n- **Variables de decisión**: incógnitas a determinar.\n- **Parámetros**: valores conocidos.\n- **Restricciones**: limitaciones del sistema.\n- **Función objetivo**: criterio a optimizar, por ejemplo:\n$$\\text{Max } Z = \\sum_{i=1}^n c_i x_i$$ sujeto a restricciones."
+    },
+    {
+      "title": "Aplicaciones",
+      "content": "Se utiliza en logística, producción, finanzas, recursos humanos y marketing. Ejemplo: optimización de rutas de transporte para minimizar costos.",
+      "videos": [
+        "https://www.youtube.com/embed/IHzgUaie_Zk"
+      ]
+    },
+    {
+      "title": "Tipos de modelos",
+      "content": "Los modelos se clasifican en:\n- **Icónicos**: representaciones físicas.\n- **Analógicos**: gráficos y diagramas.\n- **Simbólicos o matemáticos**: expresan relaciones mediante ecuaciones.\nEjemplo de función objetivo:\n$$\\text{Min } Z = \\sum_{j=1}^m d_j y_j$$",
+      "images": [
+        "https://infocase.co/wp-content/uploads/2019/07/Infocase-Colombia-Investigación-de-operaciones-1.png"
+      ]
+    },
+    {
+      "title": "Modelos matemáticos",
+      "content": "Incluyen:\n- Programación Lineal\n- Programación Entera\n- Programación No Lineal\n- Modelos de transporte y asignación\n- Teoría de colas\n- Modelos de inventario",
+      "videos": [
+        "https://www.youtube.com/embed/w6UFr2t4u34"
+      ]
+    },
+    {
+      "title": "Modelos de simulación",
+      "content": "Se emplean cuando las relaciones son complejas y no permiten solución analítica. Ejemplo: simulación Monte Carlo."
+    },
+    {
+      "title": "Fases del estudio",
+      "content": "1. Definición del problema\n2. Construcción del modelo\n3. Solución del modelo\n4. Validación e Implementación\nCada fase requiere interacción entre analistas y usuarios.",
+      "images": [
+        "https://www.caosyciencia.com/wp-content/uploads/2023/08/que-es-investigacion-de-operaciones-1024x683.jpg"
+      ]
+    },
+    {
+      "title": "Formulación del modelo",
+      "content": "Se define la función objetivo y las restricciones:\n$$\\text{Max } Z = 30x + 15y$$\nsujeto a:\n$$2x + y \\leq 200$$\n$$x + 3y \\leq 300$$",
+      "videos": [
+        "https://www.youtube.com/embed/Vw2cdBu1G-Q"
+      ]
+    },
+    {
+      "title": "Implementación y control",
+      "content": "La solución debe adaptarse al sistema real y monitorearse para garantizar su efectividad."
+    },
+    {
+      "title": "Modelo de Decisión Simple",
+      "content": "Se aplica cuando hay pocas alternativas y criterios claros. Ejemplo bajo certeza:\n$$\\text{Elegir la alternativa con mayor beneficio esperado}$$",
+      "images": [
+        "https://economipedia.com/wp-content/uploads/Investigacion-de-operaciones.png"
+      ]
+    },
+    {
+      "title": "Ejemplo práctico",
+      "content": "Supongamos dos proyectos A y B:\n- A: Beneficio = 5000\n- B: Beneficio = 4500\nDecisión: Seleccionar A.\nCódigo para cálculo en Python:\n```py\nbeneficios = {'A':5000,'B':4500}\nprint(max(beneficios,key=beneficios.get))\n```",
+      "videos": [
+        "https://www.youtube.com/embed/IHzgUaie_Zk"
+      ]
+    },
+    {
+      "title": "Decisión bajo riesgo",
+      "content": "Se calcula el valor esperado:\n$$VE = \\sum p_i \\times x_i$$\nEjemplo: si p(A)=0.6 y p(B)=0.4:\n$$VE_A = 0.6(5000)=3000$$\n$$VE_B = 0.4(4500)=1800$$"
+    },
+    {
+      "title": "Referencias",
+      "content": "Hillier, F. S., & Lieberman, G. J. (2015). *Introduction to Operations Research*. McGraw-Hill.\nTaha, H. A. (2017). *Operations Research: An Introduction*. Pearson.\nBhunia, K. A., Sahoo, L., & Shaikh, A. (2019). *Advanced Optimization and Operations Research*. Springer.\nEconomipedia. (2024). Investigación de operaciones: Qué es, origen y aplicaciones. https://economipedia.com/definiciones/investigacion-de-operaciones.html\nApuntes y Cursos. (2024). Investigación de Operaciones: Conceptos, Metodología y Aplicaciones. https://www.apuntesycursos.com/investigacion-de-operaciones-conceptos-metodologia-y-aplicaciones.html"
+    }
+  ]
+},
+  "1763302134350": {
+  "metadata": {
+    "id": 1763302134350,
+    "subject": "Investigación de Operaciones",
+    "teacher": "Ing. Mario Ibarra",
+    "logo": "https://res.cloudinary.com/dlyfncohn/image/upload/v1763085172/urlnext-images/ekjqpffg9sdky1hghdsz.jpg",
+    "unit": "Unidad 2. Programación Lineal: Método Gráfico y Simplex",
+    "topics": [
+      "Modelo de Programación Lineal simple",
+      "Formulación de modelos de PL (2 variables)",
+      "Método gráfico para modelo de 2 variables",
+      "Forma estándar del modelo de PL: Reglas de normalización",
+      "Identificación de fases en el Método Simplex",
+      "Método Simplex de una fase",
+      "Método Simplex de dos fases"
+    ],
+    "slidesCount": 52,
+    "style": "text"
+  },
+  "slides": [
+    {
+      "title": "Investigación de Operaciones",
+      "content": "Unidad 2. Programación Lineal: Método Gráfico y Simplex",
+      "images": [
+        "https://res.cloudinary.com/dlyfncohn/image/upload/v1763085172/urlnext-images/ekjqpffg9sdky1hghdsz.jpg"
+      ]
+    },
+    {
+      "title": "Modelo de Programación Lineal simple",
+      "content": "La Programación Lineal (PL) busca optimizar una función lineal sujeta a restricciones lineales.\nForma general:\n$$\\text{Max o Min } Z = c_1x_1 + c_2x_2 + \\dots + c_nx_n$$\nsujeto a:\n$$a_{11}x_1 + a_{12}x_2 + \\dots + a_{1n}x_n \\leq b_1$$\n$$x_i \\geq 0$$",
+      "images": [
+        "https://blog.damavis.com/wp-content/uploads/2022/05/programacion-lineal-metodo-simplex.png"
+      ]
+    },
+    {
+      "title": "Elementos del modelo",
+      "content": "- **Variables de decisión**: incógnitas.\n- **Función objetivo**: criterio a optimizar.\n- **Restricciones**: limitaciones.\nEjemplo:\n$$\\text{Max } Z = 3x_1 + 5x_2$$\nsujeto a:\n$$x_1 + 2x_2 \\leq 100$$\n$$2x_1 + x_2 \\leq 50$$",
+      "videos": [
+        "https://www.youtube.com/embed/0SSkMnP-3IQ"
+      ]
+    },
+    {
+      "title": "Formulación de modelos de PL (2 variables)",
+      "content": "Pasos:\n1. Identificar variables.\n2. Definir función objetivo.\n3. Establecer restricciones.\n4. Condición de no negatividad.\nEjemplo:\n$\\text{Min } Z = 4x + 3y$\nsujeto a:\n$$2x + y \\geq 8$$\n$$x + 2y \\geq 6$$",
+      "images": [
+        "https://economipedia.com/wp-content/uploads/Investigacion-de-operaciones.png"
+      ]
+    },
+    {
+      "title": "Método gráfico para modelo de 2 variables",
+      "content": "Se aplica cuando hay dos variables:\n1. Graficar restricciones.\n2. Identificar región factible.\n3. Evaluar función objetivo en vértices.\nEjemplo:\n$$\\text{Max } Z = 5x + 4y$$",
+      "videos": [
+        "https://www.youtube.com/embed/SN3zn4G8ekU"
+      ]
+    },
+    {
+      "title": "Código Python para graficar región factible",
+      "content": "```py\nimport matplotlib.pyplot as plt\nimport numpy as np\n\nx = np.linspace(0, 100, 200)\ny1 = (40 - x)/2\ny2 = (50 - 2*x)\n\nplt.figure(figsize=(8,6))\nplt.plot(x, y1, label='x + 2y ≤ 40')\nplt.plot(x, y2, label='2x + y ≤ 50')\nplt.xlim(0, 60)\nplt.ylim(0, 60)\nplt.fill_between(x, 0, np.minimum(y1, y2), alpha=0.3)\nplt.xlabel('x')\nplt.ylabel('y')\nplt.legend()\nplt.title('Región factible')\nplt.show()\n```"
+    },
+    {
+      "title": "Forma estándar del modelo de PL",
+      "content": "Reglas:\n- Convertir todas las restricciones en igualdades.\n- Agregar variables de holgura (≤), exceso (≥) y artificiales.\nEjemplo:\n$$x_1 + x_2 \\leq 4 \\to x_1 + x_2 + s_1 = 4$$",
+      "videos": [
+        "https://www.youtube.com/embed/IBgjLASeTvM"
+      ]
+    },
+    {
+      "title": "Identificación de fases en el Método Simplex",
+      "content": "Fase 1: Encontrar solución básica factible.\nFase 2: Optimizar función objetivo.\nSe usan variables artificiales y penalización M o método de dos fases.",
+      "images": [
+        "https://genially-thumbnails.genially.com/6663396a74b9260014ddc21b.png?ts=1718297100906"
+      ]
+    },
+    {
+      "title": "Método Simplex de una fase",
+      "content": "Se aplica cuando la solución inicial es factible.\nPasos:\n1. Construir tabla simplex.\n2. Identificar columna pivote.\n3. Iterar hasta optimalidad.\nEjemplo:\n$$\\text{Max } Z = 3x_1 + 2x_2$$",
+      "videos": [
+        "https://www.youtube.com/embed/gLLH4-3Mtws"
+      ]
+    },
+    {
+      "title": "Código Python con linprog",
+      "content": "```py\nfrom scipy.optimize import linprog\n\nc = [-3, -2]  # Maximizar Z = 3x + 2y\nA = [[1, 2], [2, 1]]\nb = [100, 50]\n\nres = linprog(c, A_ub=A, b_ub=b, bounds=(0, None))\nprint('Valor óptimo:', -res.fun)\nprint('Variables:', res.x)\n```"
+    },
+    {
+      "title": "Método Simplex de dos fases",
+      "content": "Fase 1: Minimizar suma de variables artificiales.\nFase 2: Resolver problema original.\nSe usa cuando no hay solución básica factible inicial.",
+      "videos": [
+        "https://www.youtube.com/embed/3uX7Ov1m6_o"
+      ]
+    },
+    {
+      "title": "Código Python manual para dos fases",
+      "content": "```py\n# Ejemplo simplificado de dos fases\nimport numpy as np\n# Matriz inicial y lógica de pivoteo se implementa aquí\n# Este código es conceptual y se puede extender para casos reales\n```"
+    },
+    {
+      "title": "Referencias",
+      "content": "Hillier, F. S., & Lieberman, G. J. (2015). *Introduction to Operations Research*. McGraw-Hill.\nTaha, H. A. (2017). *Operations Research: An Introduction*. Pearson.\nDamavis Blog. (2022). Programación Lineal y Método Simplex. https://blog.damavis.com/programacion-lineal-y-metodo-simplex/\nTecnoloblog. (2024). Método Simplex Doble Fase. https://www.tecnoloblog.com/metodo-simplex-doble-fase/\nEconomipedia. (2024). Programación Lineal. https://economipedia.com/definiciones/programacion-lineal.html"
+    }
+  ]
 }
 
 }

@@ -1,11 +1,8 @@
 import { renderToString } from 'katex'
-
-// Escapa HTML para texto no-math
-function escapeHtml(str: string) {
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-}
+import { formatInlineToHtml } from './format'
 
 // Renderiza el texto mezclado con LaTeX ($...$ inline, $$...$$ display)
+// Ahora aplica también formato inline (negrita, cursiva, subrayado) sobre los fragmentos de texto no-math.
 export function renderTextWithMath(input: string | undefined): string {
   if (!input) return ''
   const text = String(input)
@@ -15,9 +12,9 @@ export function renderTextWithMath(input: string | undefined): string {
   let m: RegExpExecArray | null
   while ((m = re.exec(text)) !== null) {
     const idx = m.index
-    // push escaped text before match, converting newlines to <br>
+    // push formatted text before match (formatting + escaping + <br/>)
     const before = text.slice(lastIndex, idx)
-    parts.push(escapeHtml(before).replace(/\r?\n/g, '<br/>'))
+    parts.push(formatInlineToHtml(before))
 
     const display = m[1]
     const inline = m[2]
@@ -33,14 +30,14 @@ export function renderTextWithMath(input: string | undefined): string {
       // fallback: show escaped original between delimiters
       console.error('KaTeX render error', e)
       parts.push('&nbsp;&nbsp;&nbsp;')
-      parts.push(escapeHtml((isDisplay ? `$$${mathText}$$` : `$${mathText}$`)))
+      parts.push(formatInlineToHtml(isDisplay ? `$$${mathText}$$` : `$${mathText}$`))
       parts.push('&nbsp;&nbsp;&nbsp;')
     }
     lastIndex = idx + m[0].length
   }
   // trailing text
   const tail = text.slice(lastIndex)
-  parts.push(escapeHtml(tail).replace(/\r?\n/g, '<br/>'))
+  parts.push(formatInlineToHtml(tail))
   return parts.join('')
 }
 
@@ -50,7 +47,7 @@ export function containsLatex(input: string | undefined): boolean {
   return /\$\$[\s\S]+?\$\$|\$[^$\n]+?\$/.test(input)
 }
 
-// Tokenize input into text/math segments. Text segments are escaped HTML with <br/>
+// Tokenize input into text/math segments. Text segments contain formatted HTML produced by formatInlineToHtml
 export type Segment = { type: 'text'; html: string } | { type: 'math'; html: string; display: boolean }
 
 export function tokenizeTextWithMath(input: string | undefined): Segment[] {
@@ -63,7 +60,7 @@ export function tokenizeTextWithMath(input: string | undefined): Segment[] {
   while ((m = re.exec(text)) !== null) {
     const idx = m.index
     const before = text.slice(lastIndex, idx)
-    if (before) segments.push({ type: 'text', html: escapeHtml(before).replace(/\r?\n/g, '<br/>') })
+    if (before) segments.push({ type: 'text', html: formatInlineToHtml(before) })
 
     const display = m[1]
     const inline = m[2]
@@ -77,13 +74,13 @@ export function tokenizeTextWithMath(input: string | undefined): Segment[] {
       segments.push({ type: 'text', html: '&nbsp;&nbsp;&nbsp;' })
     } catch {
       segments.push({ type: 'text', html: '&nbsp;&nbsp;&nbsp;' })
-      segments.push({ type: 'text', html: escapeHtml((isDisplay ? `$$${mathText}$$` : `$${mathText}$`)) })
+      segments.push({ type: 'text', html: formatInlineToHtml(isDisplay ? `$$${mathText}$$` : `$${mathText}$`) })
       segments.push({ type: 'text', html: '&nbsp;&nbsp;&nbsp;' })
     }
 
     lastIndex = idx + m[0].length
   }
   const tail = text.slice(lastIndex)
-  if (tail) segments.push({ type: 'text', html: escapeHtml(tail).replace(/\r?\n/g, '<br/>') })
+  if (tail) segments.push({ type: 'text', html: formatInlineToHtml(tail) })
   return segments
 }
