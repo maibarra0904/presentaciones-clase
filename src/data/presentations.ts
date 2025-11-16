@@ -1121,7 +1121,7 @@ const PRESENTATIONS =
     "subject": "Investigación de Operaciones",
     "teacher": "Ing. Mario Ibarra",
     "logo": "https://res.cloudinary.com/dlyfncohn/image/upload/v1763085172/urlnext-images/ekjqpffg9sdky1hghdsz.jpg",
-    "unit": "Unidad 1. TOMA DE DECISIONES EN LA INVESTIGACIÓN DE OPERACIONES",
+    "unit": "Unidad 1. Toma de decisiones en la Investigación de Operaciones",
     "topics": [
       "Conceptos básicos y elementos de la Investigación de Operaciones",
       "Tipos de modelos de Investigación de Operaciones",
@@ -1316,6 +1316,97 @@ const PRESENTATIONS =
     {
       "title": "Referencias",
       "content": "Hillier, F. S., & Lieberman, G. J. (2015). *Introduction to Operations Research*. McGraw-Hill.\nTaha, H. A. (2017). *Operations Research: An Introduction*. Pearson.\nDamavis Blog. (2022). Programación Lineal y Método Simplex. https://blog.damavis.com/programacion-lineal-y-metodo-simplex/\nTecnoloblog. (2024). Método Simplex Doble Fase. https://www.tecnoloblog.com/metodo-simplex-doble-fase/\nEconomipedia. (2024). Programación Lineal. https://economipedia.com/definiciones/programacion-lineal.html"
+    }
+  ]
+},
+  "1763314363920": {
+  "metadata": {
+    "id": 1763314363920,
+    "subject": "Investigación de Operaciones",
+    "teacher": "Ing. Mario Ibarra",
+    "logo": "https://res.cloudinary.com/dlyfncohn/image/upload/v1763085172/urlnext-images/ekjqpffg9sdky1hghdsz.jpg",
+    "unit": "Unidad 3. Análisis de Sensibilidad",
+    "topics": [
+      "Análisis de Sensibilidad: Introducción",
+      "Formulación de modelos de PL (2 variables)",
+      "Variación en coeficientes de función Objetivo",
+      "Variación en los recursos y valor unitario del recurso",
+      "Solución por Computador de Análisis de Sensibilidad (Excel) e Interpretación"
+    ],
+    "slidesCount": 36,
+    "style": "text"
+  },
+  "slides": [
+    {
+      "title": "Investigación de Operaciones",
+      "content": "Unidad 3. Análisis de Sensibilidad",
+      "images": [
+        "https://res.cloudinary.com/dlyfncohn/image/upload/v1763085172/urlnext-images/ekjqpffg9sdky1hghdsz.jpg"
+      ]
+    },
+    {
+      "title": "Análisis de Sensibilidad: Introducción",
+      "content": "El análisis de sensibilidad evalúa cómo cambios en los parámetros del modelo afectan la solución óptima. Se centra en:\n- Coeficientes de la función objetivo.\n- Recursos disponibles.\n- Restricciones.\nPermite anticipar escenarios y tomar decisiones robustas.",
+      "images": [
+        "https://0701.static.prezi.com/preview/v2/jpehmldhonlgon45t7ppyfjpzd6jc3sachvcdoaizecfr3dnitcq_3_0.png"
+      ]
+    },
+    {
+      "title": "Importancia del análisis",
+      "content": "Proporciona:\n- Rango de variación permisible.\n- Precios sombra.\n- Robustez de la solución.\nEjemplo:\n$$\\text{Max } Z = 3x_1 + 2x_2$$ sujeto a restricciones.",
+      "videos": [
+        "https://www.youtube.com/embed/HNUWbWPfZCM"
+      ]
+    },
+    {
+      "title": "Formulación de modelos de PL (2 variables)",
+      "content": "Ejemplo:\n$$\\text{Max } Z = 5x + 4y$$\nsujeto a:\n$$x + 2y \\leq 100$$\n$$2x + y \\leq 50$$\nAnalizamos cómo cambios en coeficientes y recursos afectan la solución.",
+      "images": [
+        "https://i.ytimg.com/vi/HdcDfTdH7f8/hqdefault.jpg"
+      ]
+    },
+    {
+      "title": "Variación en coeficientes de función objetivo",
+      "content": "Los cambios en los coeficientes modifican la pendiente de la función objetivo.\nIntervalo de variación:\n$$c_1 \\in [3, 7], c_2 \\in [2, 6]$$\nMantiene la solución óptima si está dentro del rango.",
+      "videos": [
+        "https://www.youtube.com/embed/l7MvC7bOS4c"
+      ]
+    },
+    {
+      "title": "Ejemplo gráfico",
+      "content": "Se determina el rango de optimalidad para los coeficientes:\n$$Z = c_1x_1 + c_2x_2$$\nCódigo Python para graficar variación:\n```py\nimport numpy as np\nimport matplotlib.pyplot as plt\n\nx = np.linspace(0, 120, 300)\n\n# Restricciones originales\ny1 = (80 - x) / 2        # x + 2y ≤ 80\ny2 = 50 - 3 * x           # 3x + y ≤ 50\n\n# Variaciones\ny1_var1 = (80 - x) / 2   # x + 2y ≤ 80\ny2_var2 = 50 - 2 * x      # 2x + y ≤ 50\n\nplt.figure(figsize=(10, 7))\nplt.plot(x, y1, label='x + 2y ≤ 80 (Original)', color='blue')\nplt.plot(x, y2, label='3x + y ≤ 50 (Original)', color='green')\nplt.plot(x, y1_var1, '--', label='x + 2y ≤ 80 (Variación)', color='blue')\nplt.plot(x, y2_var2, '--', label='2x + y ≤ 50 (Variación)', color='green')\n\n# Región factible original (gris)\ny_min_original = np.minimum(y1, y2)\ny_min_original[y_min_original < 0] = 0\nplt.fill_between(x, 0, y_min_original, where=(y_min_original > 0), color='gray', alpha=0.3, label='Región factible original')\n\n# Región factible con variaciones (naranja)\ny_min_variacion = np.minimum(y1_var1, y2_var2)\ny_min_variacion[y_min_variacion < 0] = 0\nplt.fill_between(x, 0, y_min_variacion, where=(y_min_variacion > 0), color='orange', alpha=0.3, label='Región factible con variaciones')\n\nplt.xlim(0, 60)\nplt.ylim(0, 60)\nplt.xlabel('x')\nplt.ylabel('y')\nplt.title('Restricciones originales y variaciones con regiones factibles')\nplt.legend()\nplt.grid(alpha=0.3)\nplt.show()\n```",
+      "images": [
+        "https://i.ytimg.com/vi/l7MvC7bOS4c/maxresdefault.jpg"
+      ]
+    },
+    {
+      "title": "Variación en recursos y valor unitario",
+      "content": "Cambios en el lado derecho (RHS) afectan la región factible.\nPrecio sombra:\n$$\\Delta Z = \\lambda_j \\times \\Delta b_j$$\nDonde $$\\lambda_j$$ es el valor dual.",
+      "videos": [
+        "https://www.youtube.com/embed/guvb2F1XdtY"
+      ]
+    },
+    {
+      "title": "Ejemplo práctico",
+      "content": "Si el recurso aumenta en 10 unidades y el precio sombra es 5:\n$$\\Delta Z = 5 \\times 10 = 50$$\nLa función objetivo mejora en 50 unidades.",
+      "images": [
+        "https://deingenieriaindustrial.com/wp-content/uploads/2024/01/image-70-1200x675.png"
+      ]
+    },
+    {
+      "title": "Solución por computador (Excel)",
+      "content": "Excel Solver permite obtener el informe de sensibilidad:\n- Rango permisible.\n- Precios sombra.\n- Costos reducidos.\nInterpretación clave para decisiones.",
+      "videos": [
+        "https://www.youtube.com/embed/TXjGnhNco4I"
+      ]
+    },
+    {
+      "title": "Código Python para análisis básico",
+      "content": "```py\nfrom scipy.optimize import linprog\nc = [-3,-2]\nA = [[1,2],[2,1]]\nb = [100,50]\nres = linprog(c,A_ub=A,b_ub=b,bounds=(0,None))\nprint('Valor óptimo:',-res.fun)\nprint('Variables:',res.x)\n```"
+    },
+    {
+      "title": "Referencias",
+      "content": "Hillier, F. S., & Lieberman, G. J. (2015). *Introduction to Operations Research*. McGraw-Hill.\nTaha, H. A. (2017). *Operations Research: An Introduction*. Pearson.\nProgramaciónPro. (2024). Análisis de Sensibilidad en Programación Lineal. https://programacionpro.com/analisis-de-sensibilidad-en-programacion-lineal-todo-lo-que-necesitas-saber/\nUOC. (2024). Análisis de sensibilidad. https://openaccess.uoc.edu/server/api/core/bitstreams/6dd7cff6-02ec-437a-9908-f18bb3ed6770/content\nExcel Total. (2024). Análisis de sensibilidad en Excel. https://exceltotal.com/analisis-de-sensibilidad-en-excel/"
     }
   ]
 }

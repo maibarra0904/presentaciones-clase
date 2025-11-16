@@ -4,6 +4,7 @@ import Fab from '@mui/material/Fab'
 import Tooltip from '@mui/material/Tooltip'
 import CircularProgress from '@mui/material/CircularProgress'
 import SlideViewClassic from '../components/preview/SlideViewClassic'
+import { tokenizeTextWithCode, type CodeSegment, type TextSegment } from '../services/code'
 import type { Slide } from '../services/grok'
 import { jsPDF as JsPDF } from 'jspdf'
 import html2canvas from 'html2canvas'
@@ -36,7 +37,30 @@ export default function PreviewPage() {
     const base = 220 // title + paddings + header/footer estimate
 
     const estimateFor = (s: Slide) => {
-      const text = `${s.title || ''} ${s.content || ''}`.trim()
+      // Build a plain-text approximation excluding Python code blocks (they are shown in modal)
+      let plain = ''
+      if (s.title) plain += s.title + ' '
+      const segs = tokenizeTextWithCode(s.content)
+      for (const seg of segs) {
+        if (seg.type === 'code') {
+          const cseg = seg as CodeSegment
+          const langLower = String(cseg.lang || '').toLowerCase()
+          if (langLower.startsWith('py')) {
+            // ignore Python code entirely for height estimation
+            continue
+          }
+          const codeText = String(cseg.code || '')
+          const codePreview = codeText.split('\n').slice(0, 5).join(' ')
+          plain += ' ' + codePreview
+        } else {
+          const tseg = seg as TextSegment
+          const html = tseg.html || ''
+          const stripped = String(html).replace(/<[^>]+>/g, ' ')
+          plain += ' ' + stripped
+        }
+      }
+
+      const text = plain.trim()
       const textLines = Math.max(1, Math.ceil(text.length / avgCharsPerLine))
       const textHeight = textLines * lineHeight
       let mediaHeight = 0

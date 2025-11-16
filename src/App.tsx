@@ -3,6 +3,7 @@ import './App.css'
 import { BrowserRouter,  Routes, Route } from 'react-router-dom'
 import PresentationPage from './pages/PresentationPage'
 import PreviewPage from './pages/PreviewPage'
+import IndexPage from './pages/IndexPage'
 import HomePage from './pages/HomePage'
 import GeneratorPage from './pages/GeneratorPage'
 import Header from './components/Header'
@@ -17,9 +18,10 @@ function App() {
         <main className="max-w-4xl mx-auto bg-white p-6 rounded shadow">
           <Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/generador" element={<GeneratorPage />} />
-            <Route path="/presentacion/:id" element={<PresentationPage />} />
+            <Route path="/generator" element={<GeneratorPage />} />
+            <Route path="/class/:id" element={<PresentationPage />} />
             <Route path="/preview" element={<PreviewPage />} />
+            <Route path="/guide" element={<IndexPage />} />
           </Routes>
         </main>
       </div>
