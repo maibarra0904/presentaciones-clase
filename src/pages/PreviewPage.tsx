@@ -92,8 +92,17 @@ export default function PreviewPage() {
   const slideBoxRef = useRef<HTMLDivElement | null>(null)
 
 
-  // default visibility: show all media
-  const visibility = useMemo(() => {
+  // visibility: read from localStorage when available, otherwise default to show all
+  const readVisibilityFromStorage = () => {
+    try {
+      const raw = typeof localStorage !== 'undefined' ? localStorage.getItem('presentaciones.visibility') : null
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        return { images: parsed?.images || {}, videos: parsed?.videos || {}, web: parsed?.web || {} }
+      }
+    } catch {
+      // ignore
+    }
     const images: Record<number, boolean> = {}
     const videos: Record<number, boolean> = {}
     const web: Record<number, boolean> = {}
@@ -103,6 +112,34 @@ export default function PreviewPage() {
       web[i] = true
     })
     return { images, videos, web }
+  }
+
+  const [visibility, setVisibility] = useState(() => readVisibilityFromStorage())
+
+  // keep visibility in sync with storage (useful when preview is opened in another tab)
+  useEffect(() => {
+    function onStorage(e: StorageEvent) {
+      if (e.key === 'presentaciones.visibility') {
+        try {
+          const parsed = e.newValue ? JSON.parse(e.newValue) : null
+          if (parsed) setTimeout(() => setVisibility({ images: parsed.images || {}, videos: parsed.videos || {}, web: parsed.web || {} }), 0)
+        } catch { /* ignore */ }
+      }
+    }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  }, [])
+
+  // ensure visibility has entries for all slides (when slides change)
+  useEffect(() => {
+    const next = { images: { ...(visibility.images || {}) }, videos: { ...(visibility.videos || {}) }, web: { ...(visibility.web || {}) } }
+    let changed = false
+    slides.forEach((_, i) => {
+      if (next.images[i] === undefined) { next.images[i] = true; changed = true }
+      if (next.videos[i] === undefined) { next.videos[i] = true; changed = true }
+      if (next.web[i] === undefined) { next.web[i] = true; changed = true }
+    })
+  if (changed) setTimeout(() => setVisibility(next), 0)
   }, [slides])
 
   useEffect(() => {

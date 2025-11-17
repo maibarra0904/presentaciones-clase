@@ -1,18 +1,55 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { Slide } from '../services/grok'
 import { toYouTubeEmbed, getYouTubeThumbnail } from '../services/media'
 
 type Props = {
-  slides: Slide[];
+  slides?: Slide[];
   onChange?: (slides: Slide[]) => void;
 }
 
 export default function SlideEditor({ slides, onChange }: Props) {
-  // visibility state for images/videos per-slide; default false (deselected)
-  const [imagesVisible, setImagesVisible] = useState<Record<number, boolean>>({})
-  const [videosVisible, setVideosVisible] = useState<Record<number, boolean>>({})
-  const [webVisible, setWebVisible] = useState<Record<number, boolean>>({})
+  // unified visibility state to avoid cascading renders when syncing from storage
+  const [visibility, setVisibility] = useState<{ images: Record<number, boolean>; videos: Record<number, boolean>; web: Record<number, boolean> }>(() => {
+    try {
+      const raw = typeof localStorage !== 'undefined' ? localStorage.getItem('presentaciones.visibility') : null
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        return { images: parsed?.images || {}, videos: parsed?.videos || {}, web: parsed?.web || {} }
+      }
+    } catch { /* ignore */ }
+    return { images: {}, videos: {}, web: {} }
+  })
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+
+  // when slides prop changes (for example after loading JSON), sync visibility
+  // Prefer persisted visibility; otherwise derive defaults and persist them.
+  useEffect(() => {
+    try {
+      const raw = typeof localStorage !== 'undefined' ? localStorage.getItem('presentaciones.visibility') : null
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        // defer setState to avoid synchronous setState inside effect (prevents cascading renders)
+        setTimeout(() => setVisibility({ images: parsed?.images || {}, videos: parsed?.videos || {}, web: parsed?.web || {} }), 0)
+        return
+      }
+    } catch { /* ignore */ }
+
+    // derive and persist a single visibility object to avoid cascading setState calls
+    try {
+      const images: Record<number, boolean> = {}
+      const videos: Record<number, boolean> = {}
+      const web: Record<number, boolean> = {}
+      ;(slides ?? []).forEach((sl: Slide, idx: number) => {
+        images[idx] = !!(sl.images && sl.images.length > 0)
+        videos[idx] = !!(sl.videos && sl.videos.length > 0)
+        web[idx] = !!(sl.web && sl.web.length > 0)
+      })
+  const next = { images, videos, web }
+  // defer setState to avoid synchronous setState inside effect (prevents cascading renders)
+  setTimeout(() => setVisibility(next), 0)
+  try { localStorage.setItem('presentaciones.visibility', JSON.stringify(next)) } catch { /* ignore */ }
+    } catch { /* ignore */ }
+  }, [slides])
 
   // note: visibility maps default to empty (all false). They remain local UI state and do not mutate slide data.
 
@@ -28,7 +65,7 @@ export default function SlideEditor({ slides, onChange }: Props) {
   return (
     <>
     <div className="space-y-4">
-      {slides.map((s, i) => (
+  {(slides ?? []).map((s, i) => (
         <div key={i} className="border rounded p-3">
           <input value={s.title} onChange={e => updateSlide(i, { title: e.target.value })} className="w-full font-semibold text-lg p-1 mb-2" />
           <textarea value={s.content} onChange={e => updateSlide(i, { content: e.target.value })} className="w-full p-2 h-24" />
@@ -38,10 +75,10 @@ export default function SlideEditor({ slides, onChange }: Props) {
                 <div className="text-sm text-gray-600">Imágenes</div>
                 {/* Include checkbox: when checked, images are shown (default: unchecked) */}
                 <label className="inline-flex items-center text-sm text-gray-600">
-                  <input type="checkbox" className="mr-2" checked={!!imagesVisible[i]} onChange={e => {
-                    const next = { ...(imagesVisible || {}), [i]: e.target.checked }
-                    setImagesVisible(next)
-                    try { localStorage.setItem('presentaciones.visibility', JSON.stringify({ images: next, videos: videosVisible || {} })) } catch (err) { console.warn('No se pudo persistir visibilidad', err) }
+                  <input type="checkbox" className="mr-2" checked={!!visibility.images[i]} onChange={e => {
+                    const next = { ...visibility, images: { ...(visibility.images || {}), [i]: e.target.checked } }
+                    setVisibility(next)
+                    try { localStorage.setItem('presentaciones.visibility', JSON.stringify(next)) } catch (err) { console.warn('No se pudo persistir visibilidad', err) }
                   }} />
                   Incluir imágenes
                 </label>
@@ -49,9 +86,9 @@ export default function SlideEditor({ slides, onChange }: Props) {
               <div className="flex items-center gap-3">
                 <div className="text-sm text-gray-600 mr-2">Posición imagen:</div>
                 <div className="inline-flex rounded bg-gray-100 p-1">
-                  <button onClick={() => updateSlide(i, { imagesPosition: undefined })} className={`px-2 py-1 text-sm ${!slides[i]?.imagesPosition ? 'bg-blue-600 text-white rounded' : 'text-gray-700'}`}>Por defecto</button>
-                  <button onClick={() => updateSlide(i, { imagesPosition: 'left' })} className={`px-2 py-1 text-sm ${slides[i]?.imagesPosition === 'left' ? 'bg-blue-600 text-white rounded' : 'text-gray-700'}`}>Izquierda</button>
-                  <button onClick={() => updateSlide(i, { imagesPosition: 'right' })} className={`px-2 py-1 text-sm ${slides[i]?.imagesPosition === 'right' ? 'bg-blue-600 text-white rounded' : 'text-gray-700'}`}>Derecha</button>
+                  <button onClick={() => updateSlide(i, { imagesPosition: undefined })} className={`px-2 py-1 text-sm ${!s?.imagesPosition ? 'bg-blue-600 text-white rounded' : 'text-gray-700'}`}>Por defecto</button>
+                  <button onClick={() => updateSlide(i, { imagesPosition: 'left' })} className={`px-2 py-1 text-sm ${s?.imagesPosition === 'left' ? 'bg-blue-600 text-white rounded' : 'text-gray-700'}`}>Izquierda</button>
+                  <button onClick={() => updateSlide(i, { imagesPosition: 'right' })} className={`px-2 py-1 text-sm ${s?.imagesPosition === 'right' ? 'bg-blue-600 text-white rounded' : 'text-gray-700'}`}>Derecha</button>
                 </div>
               </div>
               <button onClick={() => {
@@ -87,7 +124,7 @@ export default function SlideEditor({ slides, onChange }: Props) {
                   </div>
                 ))}
 
-                {imagesVisible[i] ? (
+                {visibility.images[i] ? (
                   <div className="grid grid-cols-2 gap-2">
                     {s.images.map((src, ii) => (
                       <img key={ii} src={src || undefined} alt={`slide-${i}-img-${ii}`} className="w-full h-32 object-cover rounded" />
@@ -107,10 +144,10 @@ export default function SlideEditor({ slides, onChange }: Props) {
               <div className="flex items-center gap-3">
                 <div className="text-sm text-gray-600">Videos (YouTube)</div>
                 <label className="inline-flex items-center text-sm text-gray-600">
-                  <input type="checkbox" className="mr-2" checked={!!videosVisible[i]} onChange={e => {
-                    const next = { ...(videosVisible || {}), [i]: e.target.checked }
-                    setVideosVisible(next)
-                    try { localStorage.setItem('presentaciones.visibility', JSON.stringify({ images: imagesVisible || {}, videos: next })) } catch (err) { console.warn('No se pudo persistir visibilidad', err) }
+                  <input type="checkbox" className="mr-2" checked={!!visibility.videos[i]} onChange={e => {
+                    const next = { ...visibility, videos: { ...(visibility.videos || {}), [i]: e.target.checked } }
+                    setVisibility(next)
+                    try { localStorage.setItem('presentaciones.visibility', JSON.stringify(next)) } catch (err) { console.warn('No se pudo persistir visibilidad', err) }
                   }} />
                   Incluir videos
                 </label>
@@ -148,7 +185,7 @@ export default function SlideEditor({ slides, onChange }: Props) {
                   </div>
                 ))}
 
-                {videosVisible[i] ? (
+                {visibility.videos[i] ? (
                   <div className="grid grid-cols-1 gap-2">
                     {s.videos.map((src, ii) => {
                       const thumb = getYouTubeThumbnail(src)
@@ -185,10 +222,10 @@ export default function SlideEditor({ slides, onChange }: Props) {
               <div className="flex items-center gap-3">
                 <div className="text-sm text-gray-600">Sitios web</div>
                 <label className="inline-flex items-center text-sm text-gray-600">
-                  <input type="checkbox" className="mr-2" checked={!!webVisible[i]} onChange={e => {
-                    const next = { ...(webVisible || {}), [i]: e.target.checked }
-                    setWebVisible(next)
-                    try { localStorage.setItem('presentaciones.visibility', JSON.stringify({ images: imagesVisible || {}, videos: videosVisible || {}, web: next })) } catch (err) { console.warn('No se pudo persistir visibilidad', err) }
+                  <input type="checkbox" className="mr-2" checked={!!visibility.web[i]} onChange={e => {
+                    const next = { ...visibility, web: { ...(visibility.web || {}), [i]: e.target.checked } }
+                    setVisibility(next)
+                    try { localStorage.setItem('presentaciones.visibility', JSON.stringify(next)) } catch (err) { console.warn('No se pudo persistir visibilidad', err) }
                   }} />
                   Incluir sitios
                 </label>
@@ -226,7 +263,7 @@ export default function SlideEditor({ slides, onChange }: Props) {
                   </div>
                 ))}
 
-                {webVisible[i] ? (
+                {visibility.web[i] ? (
                   <div className="space-y-2">
                     {s.web.map((src, wi) => {
                       const safeUrl = src ? (src.startsWith('http') ? src : `https://${src}`) : ''
@@ -285,5 +322,9 @@ export default function SlideEditor({ slides, onChange }: Props) {
     </>
   )
 }
+
+// keep visibility in sync with slides prop: when slides change (for example after loading JSON),
+// ensure visibility entries exist for indices that contain media
+// Note: we place effect after component definition to avoid linting/ordering issues
 
 

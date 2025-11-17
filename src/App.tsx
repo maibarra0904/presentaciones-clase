@@ -22,6 +22,8 @@ function App() {
             <Route path="/class/:id" element={<PresentationPage />} />
             <Route path="/preview" element={<PreviewPage />} />
             <Route path="/guide" element={<IndexPage />} />
+            {/* alias path requested: expose index at /index as well */}
+            <Route path="/index" element={<IndexPage />} />
           </Routes>
         </main>
       </div>

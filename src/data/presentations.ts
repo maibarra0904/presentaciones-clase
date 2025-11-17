@@ -75,7 +75,7 @@ const PRESENTATIONS =
     "title": "Propósito y Aplicación",
     "content": "Permite reconstruir la función original a partir de su derivada. Es fundamental en problemas de movimiento, acumulación y áreas.",
     "videos": [
-      "https://www.youtube.com/embed/UTELlQivogs"
+      "https://www.youtube.com/embed/TuLjrkf-l5g"
     ]
   },
   {
@@ -1407,6 +1407,101 @@ const PRESENTATIONS =
     {
       "title": "Referencias",
       "content": "Hillier, F. S., & Lieberman, G. J. (2015). *Introduction to Operations Research*. McGraw-Hill.\nTaha, H. A. (2017). *Operations Research: An Introduction*. Pearson.\nProgramaciónPro. (2024). Análisis de Sensibilidad en Programación Lineal. https://programacionpro.com/analisis-de-sensibilidad-en-programacion-lineal-todo-lo-que-necesitas-saber/\nUOC. (2024). Análisis de sensibilidad. https://openaccess.uoc.edu/server/api/core/bitstreams/6dd7cff6-02ec-437a-9908-f18bb3ed6770/content\nExcel Total. (2024). Análisis de sensibilidad en Excel. https://exceltotal.com/analisis-de-sensibilidad-en-excel/"
+    }
+  ]
+},
+  "1763334940941": {
+  "metadata": {
+    "id": 1763334940941,
+    "subject": "Investigación de Operaciones",
+    "teacher": "Ing. Mario Ibarra",
+    "logo": "https://res.cloudinary.com/dlyfncohn/image/upload/v1763085172/urlnext-images/ekjqpffg9sdky1hghdsz.jpg",
+    "unit": "Unidad 4. Modelo de transporte y modelo de redes",
+    "topics": [
+      "Modelo de Transporte: Algoritmo Esquina N-O",
+      "Modelo de Transporte: Algoritmo Mínimo Costo",
+      "Modelo de Transporte: Algoritmo de Vogel",
+      "Modelo de Asignación y Transbordo",
+      "Modelo de Redes: Minimización",
+      "Problema de la ruta más corta (Algoritmo de Dijkstra)",
+      "Problema del flujo máximo"
+    ],
+    "slidesCount": 48,
+    "style": "text"
+  },
+  "slides": [
+    {
+      "title": "Investigación de Operaciones",
+      "content": "Unidad 4. Modelo de transporte y modelo de redes",
+      "images": [
+        "https://res.cloudinary.com/dlyfncohn/image/upload/v1763085172/urlnext-images/ekjqpffg9sdky1hghdsz.jpg"
+      ]
+    },
+    {
+      "title": "Modelo de Transporte: Algoritmo Esquina N-O",
+      "content": "Este método inicia en la celda superior izquierda (esquina Noroeste) y asigna la cantidad máxima posible según oferta y demanda. Se avanza hacia la derecha o abajo según se agoten recursos.\nEjemplo:\n$$\\text{Costo total} = \\sum_{i,j} c_{ij} x_{ij}$$"
+    },
+    {
+      "title": "Pasos del método N-O",
+      "content": "1. Seleccionar celda Noroeste.\n2. Asignar mínimo entre oferta y demanda.\n3. Ajustar oferta/demanda.\n4. Moverse a la siguiente celda.\n5. Repetir hasta completar asignación.",
+      "videos": [
+        "https://youtu.be/IyogQ4noci0?si=5X816181F5CjNYuH"
+      ]
+    },
+    {
+      "title": "Modelo de Transporte: Algoritmo Mínimo Costo",
+      "content": "Este método selecciona la celda con menor costo unitario y asigna la cantidad máxima posible.\nVentaja: reduce el costo inicial.\nEjemplo:\n$$\\text{Costo mínimo} = \\min(c_{ij})$$"
+    },
+    {
+      "title": "Pasos del método Mínimo Costo",
+      "content": "1. Identificar celda con menor costo.\n2. Asignar mínimo entre oferta y demanda.\n3. Ajustar oferta/demanda.\n4. Repetir hasta completar asignación.",
+      "videos": [
+        "https://youtu.be/n5cXI10tZMw?si=dAqv5730WqyZodFk"
+      ]
+    },
+    {
+      "title": "Modelo de Transporte: Algoritmo de Vogel",
+      "content": "Calcula penalizaciones por fila y columna:\n$$\\text{Penalización} = \\text{Diferencia entre dos menores costos}$$\nSelecciona la celda con mayor penalización y asigna."
+    },
+    {
+      "title": "Pasos del método de Vogel",
+      "content": "1. Calcular penalizaciones.\n2. Seleccionar fila/columna con mayor penalización.\n3. Asignar en celda de menor costo.\n4. Ajustar oferta/demanda.\n5. Repetir.",
+      "videos": [
+        "https://youtu.be/0TpyIG5zj1E?si=-oiGWbXRdVYt9eMP"
+      ]
+    },
+    {
+      "title": "Modelo de Asignación y Transbordo",
+      "content": "Asignación: cada recurso se asigna a una tarea.\nTransbordo: incluye nodos intermedios.\nModelo matemático:\n$$\\text{Min } Z = \\sum_{i,j} c_{ij} x_{ij}$$ sujeto a:\n$$\\sum_j x_{ij} = 1, \\sum_i x_{ij} = 1$$"
+    },
+    {
+      "title": "Aplicaciones",
+      "content": "Asignación: personal a tareas.\nTransbordo: transporte con nodos intermedios.\nHerramientas: Solver en Excel.",
+      "videos": [
+        "https://youtu.be/jhuAjgQc2hs?si=7FQHN-_74TeF0mg4"
+      ]
+    },
+    {
+      "title": "Modelo de Redes: Minimización",
+      "content": "Busca minimizar costos en redes.\nEjemplo:\n$$\\text{Min } Z = \\sum_{(i,j) \\in A} c_{ij} x_{ij}$$\nSujeto a restricciones de flujo."
+    },
+    {
+      "title": "Problema de la ruta más corta (Algoritmo de Dijkstra)",
+      "content": "Encuentra la ruta más corta desde un nodo origen a todos los demás.\nComplejidad: $$O(n^2)$$.\nCódigo de Aplicativo en Python:\n```py\nimport tkinter as tk\nfrom tkinter import ttk\nimport networkx as nx\nimport matplotlib.pyplot as plt\nfrom matplotlib.backends.backend_tkagg import FigureCanvasTkAgg\n\n# =========================\n# Crear datos de ejemplo para el grafo\n# =========================\nG = nx.Graph()\nG.add_weighted_edges_from([\n    ('A', 'B', 4), ('A', 'C', 2), ('B', 'C', 1), ('B', 'D', 5),\n    ('C', 'D', 8), ('C', 'E', 10), ('D', 'E', 2), ('D', 'F', 6), ('E', 'F', 3)\n])\n\n# =========================\n# Función para calcular rutas más cortas y actualizar visualización\n# =========================\ndef calcular_rutas():\n    nodo_origen = combo_nodo.get()\n    if nodo_origen:\n        distancias = nx.single_source_dijkstra_path_length(G, nodo_origen)\n        rutas = nx.single_source_dijkstra_path(G, nodo_origen)\n\n        # Mostrar resultados en el cuadro de texto\n        texto_resultados.delete('1.0', tk.END)\n        texto_resultados.insert(tk.END, f\"Rutas más cortas desde {nodo_origen}:\\n\")\n        for nodo, dist in distancias.items():\n            texto_resultados.insert(tk.END, f\"{nodo_origen} -> {nodo}: {dist}, Ruta: {rutas[nodo]}\\n\")\n\n        # Actualizar gráfico resaltando rutas\n        fig.clear()\n        ax = fig.add_subplot(111)\n        pos = nx.spring_layout(G)\n        nx.draw(G, pos, with_labels=True, node_color='lightblue', node_size=1500, font_size=12, ax=ax)\n        labels = nx.get_edge_attributes(G, 'weight')\n        nx.draw_networkx_edge_labels(G, pos, edge_labels=labels, ax=ax)\n\n        # Resaltar nodos y aristas en las rutas\n        for nodo, ruta in rutas.items():\n            edges = list(zip(ruta, ruta[1:]))\n            nx.draw_networkx_nodes(G, pos, nodelist=ruta, node_color='orange', ax=ax)\n            nx.draw_networkx_edges(G, pos, edgelist=edges, edge_color='orange', width=2, ax=ax)\n\n        canvas.draw()\n\n# =========================\n# Crear interfaz gráfica\n# =========================\nroot = tk.Tk()\nroot.title(\"Algoritmo de Dijkstra - Visualización Interactiva\")\nroot.geometry(\"900x700\")\n\n# Frame superior para selección\nframe_superior = ttk.Frame(root)\nframe_superior.pack(pady=10)\n\nlabel_nodo = ttk.Label(frame_superior, text=\"Selecciona nodo origen:\")\nlabel_nodo.pack(side=tk.LEFT, padx=5)\n\ncombo_nodo = ttk.Combobox(frame_superior, values=list(G.nodes()))\ncombo_nodo.pack(side=tk.LEFT, padx=5)\n\nbtn_calcular = ttk.Button(frame_superior, text=\"Calcular rutas\", command=calcular_rutas)\nbtn_calcular.pack(side=tk.LEFT, padx=5)\n\n# Frame para resultados\ntexto_resultados = tk.Text(root, height=10, width=100)\ntexto_resultados.pack(pady=10)\n\n# Frame para gráfico\nfig = plt.Figure(figsize=(8, 6))\ncanvas = FigureCanvasTkAgg(fig, master=root)\ncanvas.get_tk_widget().pack()\n\n# Dibujar grafo inicial\nax = fig.add_subplot(111)\npos = nx.spring_layout(G)\nnx.draw(G, pos, with_labels=True, node_color='lightblue', node_size=1500, font_size=12, ax=ax)\nlabels = nx.get_edge_attributes(G, 'weight')\nnx.draw_networkx_edge_labels(G, pos, edge_labels=labels, ax=ax)\ncanvas.draw()\n\nroot.mainloop()\n```",
+      "videos": [
+        "https://youtu.be/fgdCNuGPJnw?si=pvps6pO2GBn7jP5J"
+      ]
+    },
+    {
+      "title": "Problema del flujo máximo",
+      "content": "Determina el flujo máximo entre dos nodos.\nAlgoritmo: Ford-Fulkerson.\nCódigo de Aplicativo en Python:\n```py\nimport tkinter as tk\nfrom tkinter import ttk\nimport networkx as nx\nimport matplotlib.pyplot as plt\nfrom matplotlib.backends.backend_tkagg import FigureCanvasTkAgg\nfrom networkx.algorithms.flow import maximum_flow\n\n# =========================\n# Crear grafo dirigido con capacidades\n# =========================\nG_flow = nx.DiGraph()\nG_flow.add_edge('S', 'A', capacity=16)\nG_flow.add_edge('S', 'C', capacity=13)\nG_flow.add_edge('A', 'B', capacity=12)\nG_flow.add_edge('B', 'C', capacity=9)\nG_flow.add_edge('C', 'A', capacity=4)\nG_flow.add_edge('B', 'T', capacity=20)\nG_flow.add_edge('C', 'D', capacity=14)\nG_flow.add_edge('D', 'B', capacity=7)\nG_flow.add_edge('D', 'T', capacity=4)\n\n# =========================\n# Función para calcular flujo máximo y actualizar visualización\n# =========================\ndef calcular_flujo():\n    source = combo_source.get()\n    sink = combo_sink.get()\n    if source and sink:\n        flow_value, flow_dict = maximum_flow(G_flow, source, sink)\n\n        # Mostrar resultados en el cuadro de texto\n        texto_resultados.delete('1.0', tk.END)\n        texto_resultados.insert(tk.END, f\"Flujo máximo desde {source} hasta {sink}: {flow_value}\\n\")\n        texto_resultados.insert(tk.END, \"Detalle del flujo por arista:\\n\")\n        for u in flow_dict:\n            for v in flow_dict[u]:\n                texto_resultados.insert(tk.END, f\"{u} -> {v}: {flow_dict[u][v]} / {G_flow[u][v]['capacity']}\\n\")\n\n        # Actualizar gráfico mostrando flujo\n        fig.clear()\n        ax = fig.add_subplot(111)\n        pos = nx.spring_layout(G_flow)\n        nx.draw(G_flow, pos, with_labels=True, node_color='lightgreen', node_size=1500, font_size=12, ax=ax)\n        edge_labels = {(u,v): f\"{flow_dict[u][v]}/{G_flow[u][v]['capacity']}\" for u,v in G_flow.edges()}\n        nx.draw_networkx_edge_labels(G_flow, pos, edge_labels=edge_labels, ax=ax)\n        canvas.draw()\n\n# =========================\n# Crear interfaz gráfica\n# =========================\nroot = tk.Tk()\nroot.title(\"Algoritmo Ford-Fulkerson - Visualización Interactiva\")\nroot.geometry(\"900x700\")\n\n# Frame superior para selección\nframe_superior = ttk.Frame(root)\nframe_superior.pack(pady=10)\n\nlabel_source = ttk.Label(frame_superior, text=\"Nodo origen:\")\nlabel_source.pack(side=tk.LEFT, padx=5)\ncombo_source = ttk.Combobox(frame_superior, values=list(G_flow.nodes()))\ncombo_source.pack(side=tk.LEFT, padx=5)\n\nlabel_sink = ttk.Label(frame_superior, text=\"Nodo destino:\")\nlabel_sink.pack(side=tk.LEFT, padx=5)\ncombo_sink = ttk.Combobox(frame_superior, values=list(G_flow.nodes()))\ncombo_sink.pack(side=tk.LEFT, padx=5)\n\nbtn_calcular = ttk.Button(frame_superior, text=\"Calcular flujo máximo\", command=calcular_flujo)\nbtn_calcular.pack(side=tk.LEFT, padx=5)\n\n# Frame para resultados\ntexto_resultados = tk.Text(root, height=10, width=100)\ntexto_resultados.pack(pady=10)\n\n# Frame para gráfico\nfig = plt.Figure(figsize=(8, 6))\ncanvas = FigureCanvasTkAgg(fig, master=root)\ncanvas.get_tk_widget().pack()\n\n# Dibujar grafo inicial con capacidades\nax = fig.add_subplot(111)\npos = nx.spring_layout(G_flow)\nnx.draw(G_flow, pos, with_labels=True, node_color='lightgreen', node_size=1500, font_size=12, ax=ax)\nedge_labels = {(u,v): f\"0/{G_flow[u][v]['capacity']}\" for u,v in G_flow.edges()}\nnx.draw_networkx_edge_labels(G_flow, pos, edge_labels=edge_labels, ax=ax)\ncanvas.draw()\n\nroot.mainloop()\n```",
+      "videos": [
+        "https://youtu.be/Btqs1f0TfeU?si=Ae-f3ItVU1ruxkSU"
+      ]
+    },
+    {
+      "title": "Referencias",
+      "content": "Hillier, F. S., & Lieberman, G. J. (2015). *Introduction to Operations Research*. McGraw-Hill.\nTaha, H. A. (2017). *Operations Research: An Introduction*. Pearson.\nGestión de Operaciones. (2024). Métodos de transporte y redes. https://www.gestiondeoperaciones.com\nZweigmedia. (2024). Herramientas para modelos de transporte. https://www.zweigmedia.com/utilities/lpg/index.html"
     }
   ]
 }

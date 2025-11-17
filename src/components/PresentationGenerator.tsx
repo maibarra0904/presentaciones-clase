@@ -47,6 +47,18 @@ export default function PresentationGenerator() {
       if (Array.isArray(parsed)) {
         try {
           const normalized = parsed.map((s: Slide) => ({ ...s, videos: s.videos ? s.videos.map(v => toYouTubeEmbed(v)) : s.videos }))
+          // if slides include media, enable visibility for those slides by default
+          try {
+            const images: Record<number, boolean> = {}
+            const videos: Record<number, boolean> = {}
+            const web: Record<number, boolean> = {}
+            normalized.forEach((sl: Slide, idx: number) => {
+              images[idx] = !!(sl.images && sl.images.length > 0)
+              videos[idx] = !!(sl.videos && sl.videos.length > 0)
+              web[idx] = !!(sl.web && sl.web.length > 0)
+            })
+            localStorage.setItem('presentaciones.visibility', JSON.stringify({ images, videos, web }))
+            } catch { /* ignore visibility persistence errors */ }
           return normalized as Slide[]
         } catch {
           return parsed as Slide[]
@@ -56,6 +68,18 @@ export default function PresentationGenerator() {
       if (parsed && typeof parsed === 'object' && Array.isArray(parsed.slides)) {
         try {
           const normalized = parsed.slides.map((s: Slide) => ({ ...s, videos: s.videos ? s.videos.map(v => toYouTubeEmbed(v)) : s.videos }))
+          // enable visibility for media present in the loaded wrapper
+          try {
+            const images: Record<number, boolean> = {}
+            const videos: Record<number, boolean> = {}
+            const web: Record<number, boolean> = {}
+            normalized.forEach((sl: Slide, idx: number) => {
+              images[idx] = !!(sl.images && sl.images.length > 0)
+              videos[idx] = !!(sl.videos && sl.videos.length > 0)
+              web[idx] = !!(sl.web && sl.web.length > 0)
+            })
+            localStorage.setItem('presentaciones.visibility', JSON.stringify({ images, videos, web }))
+          } catch { /* ignore */ }
           return normalized as Slide[]
         } catch {
           return parsed.slides as Slide[]
@@ -153,7 +177,6 @@ export default function PresentationGenerator() {
 
         // wait 30s between topics, except after the last one
         if (i < topics.length - 1) {
-          // eslint-disable-next-line no-await-in-loop
           await new Promise(resolve => setTimeout(resolve, 30000))
         }
       }
@@ -208,10 +231,30 @@ export default function PresentationGenerator() {
         content: s.content || '',
         images: Array.isArray(s.images) ? s.images : (s.images ? [s.images] : undefined),
         videos: Array.isArray(s.videos) ? s.videos.map(v => toYouTubeEmbed(v)) : (s.videos ? [toYouTubeEmbed(s.videos as unknown as string)] : undefined),
-  imagesPosition: (s as Partial<Slide>).imagesPosition || undefined,
+        // support web sites when present in the imported JSON
+        web: (() => {
+          const mw = (s as unknown as { web?: string | string[] }).web
+          return Array.isArray(mw) ? mw : (mw ? [mw] : undefined)
+        })(),
+        imagesPosition: (s as Partial<Slide>).imagesPosition || undefined,
       })) as Slide[]
 
       setSlides(normalized)
+
+      // ensure visibility flags are enabled for slides that actually contain media
+      try {
+        const images: Record<number, boolean> = {}
+        const videos: Record<number, boolean> = {}
+        const web: Record<number, boolean> = {}
+        normalized.forEach((sl, idx) => {
+          images[idx] = !!(sl.images && sl.images.length > 0)
+          videos[idx] = !!(sl.videos && sl.videos.length > 0)
+          web[idx] = !!(sl.web && sl.web.length > 0)
+        })
+        localStorage.setItem('presentaciones.visibility', JSON.stringify({ images, videos, web }))
+      } catch (e) {
+        console.warn('No se pudo persistir presentaciones.visibility al cargar JSON', e)
+      }
 
       // if metadata present, populate form fields
       if (incomingMeta && typeof incomingMeta === 'object') {
@@ -230,6 +273,22 @@ export default function PresentationGenerator() {
       try {
         const wrapper = { metadata: { subject, teacher, logo: logoUrl, unit, topics, slidesCount, style }, slides: normalized }
         localStorage.setItem(slidesKey, JSON.stringify(wrapper))
+
+        // Also persist a visibility map derived from the loaded slides so UI checkboxes
+        // (Imágenes / Videos / Sitios) are enabled when the imported slides contain media.
+        try {
+          const images: Record<number, boolean> = {}
+          const videos: Record<number, boolean> = {}
+          const web: Record<number, boolean> = {}
+          normalized.forEach((sl, idx) => {
+            images[idx] = !!(sl.images && sl.images.length > 0)
+            videos[idx] = !!(sl.videos && sl.videos.length > 0)
+            web[idx] = !!(sl.web && sl.web.length > 0)
+          })
+          localStorage.setItem('presentaciones.visibility', JSON.stringify({ images, videos, web }))
+        } catch (innerErr) {
+          console.warn('No se pudo persistir presentaciones.visibility al cargar JSON', innerErr)
+        }
       } catch (e) { console.warn('No se pudo persistir slides al cargar JSON', e) }
 
       setInfoMessage('Datos cargados correctamente. Puedes editar las diapositivas abajo.')
