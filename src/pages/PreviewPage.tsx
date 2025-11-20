@@ -98,7 +98,7 @@ export default function PreviewPage() {
       const raw = typeof localStorage !== 'undefined' ? localStorage.getItem('presentaciones.visibility') : null
       if (raw) {
         const parsed = JSON.parse(raw)
-        return { images: parsed?.images || {}, videos: parsed?.videos || {}, web: parsed?.web || {} }
+        return { images: parsed?.images || {}, videos: parsed?.videos || {}, web: parsed?.web || {}, pdf: parsed?.pdf || {} }
       }
     } catch {
       // ignore
@@ -106,12 +106,15 @@ export default function PreviewPage() {
     const images: Record<number, boolean> = {}
     const videos: Record<number, boolean> = {}
     const web: Record<number, boolean> = {}
+    const pdf: Record<number, boolean> = {}
     slides.forEach((_, i) => {
       images[i] = true
       videos[i] = true
       web[i] = true
+      // default pdf visibility only when slide contains explicit pdf entries
+      pdf[i] = !!(slides[i] && (slides[i] as Slide).pdf && (slides[i] as Slide).pdf!.length > 0)
     })
-    return { images, videos, web }
+    return { images, videos, web, pdf }
   }
 
   const [visibility, setVisibility] = useState(() => readVisibilityFromStorage())
@@ -122,7 +125,7 @@ export default function PreviewPage() {
       if (e.key === 'presentaciones.visibility') {
         try {
           const parsed = e.newValue ? JSON.parse(e.newValue) : null
-          if (parsed) setTimeout(() => setVisibility({ images: parsed.images || {}, videos: parsed.videos || {}, web: parsed.web || {} }), 0)
+          if (parsed) setTimeout(() => setVisibility({ images: parsed.images || {}, videos: parsed.videos || {}, web: parsed.web || {}, pdf: parsed.pdf || {} }), 0)
         } catch { /* ignore */ }
       }
     }
@@ -132,14 +135,25 @@ export default function PreviewPage() {
 
   // ensure visibility has entries for all slides (when slides change)
   useEffect(() => {
-    const next = { images: { ...(visibility.images || {}) }, videos: { ...(visibility.videos || {}) }, web: { ...(visibility.web || {}) } }
-    let changed = false
-    slides.forEach((_, i) => {
-      if (next.images[i] === undefined) { next.images[i] = true; changed = true }
-      if (next.videos[i] === undefined) { next.videos[i] = true; changed = true }
-      if (next.web[i] === undefined) { next.web[i] = true; changed = true }
-    })
-  if (changed) setTimeout(() => setVisibility(next), 0)
+    // Defer setState to avoid synchronous state updates inside the effect
+    const t = setTimeout(() => {
+      setVisibility(prev => {
+        const next = { images: { ...(prev.images || {}) }, videos: { ...(prev.videos || {}) }, web: { ...(prev.web || {}) }, pdf: { ...(prev.pdf || {}) } }
+        let changed = false
+        slides.forEach((_, i) => {
+          if (next.images[i] === undefined) { next.images[i] = true; changed = true }
+          if (next.videos[i] === undefined) { next.videos[i] = true; changed = true }
+          if (next.web[i] === undefined) { next.web[i] = true; changed = true }
+          if (next.pdf[i] === undefined) {
+            // default pdf visibility based on slide content
+            next.pdf[i] = !!(slides[i] && (slides[i] as Slide).pdf && (slides[i] as Slide).pdf!.length > 0)
+            changed = true
+          }
+        })
+        return changed ? next : prev
+      })
+    }, 0)
+    return () => clearTimeout(t)
   }, [slides])
 
   useEffect(() => {

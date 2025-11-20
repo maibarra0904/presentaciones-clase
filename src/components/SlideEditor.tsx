@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import type { Slide } from '../services/grok'
 import { toYouTubeEmbed, getYouTubeThumbnail } from '../services/media'
+import { isPdfUrl } from '../services/pdf'
 
 type Props = {
   slides?: Slide[];
@@ -9,15 +10,15 @@ type Props = {
 
 export default function SlideEditor({ slides, onChange }: Props) {
   // unified visibility state to avoid cascading renders when syncing from storage
-  const [visibility, setVisibility] = useState<{ images: Record<number, boolean>; videos: Record<number, boolean>; web: Record<number, boolean> }>(() => {
+  const [visibility, setVisibility] = useState<{ images: Record<number, boolean>; videos: Record<number, boolean>; web: Record<number, boolean>; pdf: Record<number, boolean> }>(() => {
     try {
       const raw = typeof localStorage !== 'undefined' ? localStorage.getItem('presentaciones.visibility') : null
       if (raw) {
         const parsed = JSON.parse(raw)
-        return { images: parsed?.images || {}, videos: parsed?.videos || {}, web: parsed?.web || {} }
+        return { images: parsed?.images || {}, videos: parsed?.videos || {}, web: parsed?.web || {}, pdf: parsed?.pdf || {} }
       }
     } catch { /* ignore */ }
-    return { images: {}, videos: {}, web: {} }
+    return { images: {}, videos: {}, web: {}, pdf: {} }
   })
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
 
@@ -29,7 +30,7 @@ export default function SlideEditor({ slides, onChange }: Props) {
       if (raw) {
         const parsed = JSON.parse(raw)
         // defer setState to avoid synchronous setState inside effect (prevents cascading renders)
-        setTimeout(() => setVisibility({ images: parsed?.images || {}, videos: parsed?.videos || {}, web: parsed?.web || {} }), 0)
+        setTimeout(() => setVisibility({ images: parsed?.images || {}, videos: parsed?.videos || {}, web: parsed?.web || {}, pdf: parsed?.pdf || {} }), 0)
         return
       }
     } catch { /* ignore */ }
@@ -39,12 +40,19 @@ export default function SlideEditor({ slides, onChange }: Props) {
       const images: Record<number, boolean> = {}
       const videos: Record<number, boolean> = {}
       const web: Record<number, boolean> = {}
+      const pdf: Record<number, boolean> = {}
       ;(slides ?? []).forEach((sl: Slide, idx: number) => {
         images[idx] = !!(sl.images && sl.images.length > 0)
         videos[idx] = !!(sl.videos && sl.videos.length > 0)
-        web[idx] = !!(sl.web && sl.web.length > 0)
+        // consider web present only when there are non-PDF web entries
+        web[idx] = !!(sl.web && (sl.web as string[]).some(u => !isPdfUrl(String(u))))
+        // prefer explicit pdf field; otherwise detect pdfs in images or web arrays for backwards compatibility
+        const hasPdfExplicit = !!(sl as any).pdf && (Array.isArray((sl as any).pdf) ? (sl as any).pdf.length > 0 : true)
+        const hasPdfInImages = !!(sl.images && sl.images.some((u: string) => isPdfUrl(u)))
+        const hasPdfInWeb = !!(sl.web && sl.web.some((u: string) => isPdfUrl(u)))
+        pdf[idx] = hasPdfExplicit || hasPdfInImages || hasPdfInWeb
       })
-  const next = { images, videos, web }
+  const next = { images, videos, web, pdf }
   // defer setState to avoid synchronous setState inside effect (prevents cascading renders)
   setTimeout(() => setVisibility(next), 0)
   try { localStorage.setItem('presentaciones.visibility', JSON.stringify(next)) } catch { /* ignore */ }
@@ -75,10 +83,11 @@ export default function SlideEditor({ slides, onChange }: Props) {
                 <div className="text-sm text-gray-600">Imágenes</div>
                 {/* Include checkbox: when checked, images are shown (default: unchecked) */}
                 <label className="inline-flex items-center text-sm text-gray-600">
-                  <input type="checkbox" className="mr-2" checked={!!visibility.images[i]} onChange={e => {
+                    <input type="checkbox" className="mr-2" checked={!!visibility.images[i]} onChange={e => {
                     const next = { ...visibility, images: { ...(visibility.images || {}), [i]: e.target.checked } }
                     setVisibility(next)
                     try { localStorage.setItem('presentaciones.visibility', JSON.stringify(next)) } catch (err) { console.warn('No se pudo persistir visibilidad', err) }
+                    try { window.dispatchEvent(new CustomEvent('presentaciones.visibility', { detail: next })) } catch (_) { }
                   }} />
                   Incluir imágenes
                 </label>
@@ -148,6 +157,7 @@ export default function SlideEditor({ slides, onChange }: Props) {
                     const next = { ...visibility, videos: { ...(visibility.videos || {}), [i]: e.target.checked } }
                     setVisibility(next)
                     try { localStorage.setItem('presentaciones.visibility', JSON.stringify(next)) } catch (err) { console.warn('No se pudo persistir visibilidad', err) }
+                    try { window.dispatchEvent(new CustomEvent('presentaciones.visibility', { detail: next })) } catch (_) { }
                   }} />
                   Incluir videos
                 </label>
@@ -226,9 +236,11 @@ export default function SlideEditor({ slides, onChange }: Props) {
                     const next = { ...visibility, web: { ...(visibility.web || {}), [i]: e.target.checked } }
                     setVisibility(next)
                     try { localStorage.setItem('presentaciones.visibility', JSON.stringify(next)) } catch (err) { console.warn('No se pudo persistir visibilidad', err) }
+                    try { window.dispatchEvent(new CustomEvent('presentaciones.visibility', { detail: next })) } catch (_) { }
                   }} />
                   Incluir sitios
                 </label>
+                
               </div>
               <button onClick={() => {
                 const base = slides || []
@@ -240,24 +252,34 @@ export default function SlideEditor({ slides, onChange }: Props) {
               }} className="px-2 py-1 text-xs bg-gray-100 rounded">Agregar sitio</button>
             </div>
 
-            {s.web && s.web.length > 0 ? (
+            {((s.web || []) as string[]).filter(u => !isPdfUrl(String(u))).length > 0 ? (
               <div className="space-y-2">
-                {s.web.map((w, wi) => (
+                {( (s.web || []) as string[]).filter(u => !isPdfUrl(String(u))).map((w, wi) => (
                   <div key={wi} className="flex items-center gap-2">
                     <input value={w} onChange={e => {
                       const base = slides || []
                       const copy = base.slice()
-                      const arr = copy[i].web ? [...copy[i].web!] : []
-                      arr[wi] = e.target.value
-                      copy[i] = { ...copy[i], web: arr }
+                      // operate on a filtered view of web (non-pdf entries only)
+                      const arr = ((copy[i].web || []) as string[]).filter(u => !isPdfUrl(String(u)))
+                      const newVal = e.target.value
+                      if (isPdfUrl(newVal)) {
+                        // move this entry to pdfs
+                        arr.splice(wi, 1)
+                        const pdfArr = (copy[i] as any).pdf ? [...(copy[i] as any).pdf] : []
+                        pdfArr.push(newVal)
+                        copy[i] = { ...(copy[i] as any), web: arr.length ? arr : undefined, pdf: pdfArr }
+                      } else {
+                        arr[wi] = newVal
+                        copy[i] = { ...(copy[i] as any), web: arr }
+                      }
                       onChange?.(copy)
                     }} className="flex-1 p-2 border rounded" />
                     <button onClick={() => {
                       const base = slides || []
                       const copy = base.slice()
-                      const arr = copy[i].web ? [...copy[i].web!] : []
+                      const arr = ((copy[i].web || []) as string[]).filter(u => !isPdfUrl(String(u)))
                       arr.splice(wi, 1)
-                      copy[i] = { ...copy[i], web: arr.length ? arr : undefined }
+                      copy[i] = { ...(copy[i] as any), web: arr.length ? arr : undefined }
                       onChange?.(copy)
                     }} className="px-2 py-1 bg-red-100 rounded">Eliminar</button>
                   </div>
@@ -265,7 +287,7 @@ export default function SlideEditor({ slides, onChange }: Props) {
 
                 {visibility.web[i] ? (
                   <div className="space-y-2">
-                    {s.web.map((src, wi) => {
+                    {((s.web || []) as string[]).filter(u => !isPdfUrl(String(u))).map((src, wi) => {
                       const safeUrl = src ? (src.startsWith('http') ? src : `https://${src}`) : ''
                       let hostname = ''
                       try { hostname = safeUrl ? new URL(safeUrl).hostname : '' } catch { hostname = safeUrl }
@@ -297,6 +319,64 @@ export default function SlideEditor({ slides, onChange }: Props) {
               </div>
             ) : (
               <div className="text-sm text-gray-500">No hay sitios. Usa "Agregar sitio" para añadir una URL del sitio.</div>
+            )}
+          </div>
+          {/* PDFs section (separate from web) */}
+          <div className="mt-3">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-3">
+                <div className="text-sm text-gray-600">PDFs</div>
+                <label className="inline-flex items-center text-sm text-gray-600">
+                  <input type="checkbox" className="mr-2" checked={!!visibility.pdf[i]} onChange={e => {
+                    const next = { ...visibility, pdf: { ...(visibility.pdf || {}), [i]: e.target.checked } }
+                    setVisibility(next)
+                    try { localStorage.setItem('presentaciones.visibility', JSON.stringify(next)) } catch (err) { console.warn('No se pudo persistir visibilidad', err) }
+                    try { window.dispatchEvent(new CustomEvent('presentaciones.visibility', { detail: next })) } catch (_) { }
+                  }} />
+                  Incluir PDFs
+                </label>
+              </div>
+              <button onClick={() => {
+                const base = slides || []
+                const copy = base.slice()
+                const arr = (copy[i] as any).pdf ? [...(copy[i] as any).pdf] : []
+                arr.push('')
+                copy[i] = { ...(copy[i] as any), pdf: arr }
+                onChange?.(copy)
+              }} className="px-2 py-1 text-xs bg-gray-100 rounded">Agregar PDF</button>
+            </div>
+
+            {(s as any).pdf && (s as any).pdf.length > 0 ? (
+              <div className="space-y-2">
+                {(s as any).pdf.map((p: string, pi: number) => (
+                  <div key={pi} className="flex items-center gap-2">
+                    <input value={p} onChange={e => {
+                      const base = slides || []
+                      const copy = base.slice()
+                      const arr = (copy[i] as any).pdf ? [...(copy[i] as any).pdf!] : []
+                      arr[pi] = e.target.value
+                      copy[i] = { ...(copy[i] as any), pdf: arr }
+                      onChange?.(copy)
+                    }} className="flex-1 p-2 border rounded" />
+                    <button onClick={() => {
+                      const base = slides || []
+                      const copy = base.slice()
+                      const arr = (copy[i] as any).pdf ? [...(copy[i] as any).pdf!] : []
+                      arr.splice(pi, 1)
+                      copy[i] = { ...(copy[i] as any), pdf: arr.length ? arr : undefined }
+                      onChange?.(copy)
+                    }} className="px-2 py-1 bg-red-100 rounded">Eliminar</button>
+                  </div>
+                ))}
+
+                {visibility.pdf[i] ? (
+                  <div className="mt-2 text-sm text-gray-500">PDFs visibles en la vista previa.</div>
+                ) : (
+                  <div className="text-sm text-gray-500">PDFs disponibles (ocultos). Marca "Incluir PDFs" para verlos.</div>
+                )}
+              </div>
+            ) : (
+              <div className="text-sm text-gray-500">No hay PDFs. Usa "Agregar PDF" para añadir una URL de PDF.</div>
             )}
           </div>
         </div>

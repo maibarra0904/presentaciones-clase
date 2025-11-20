@@ -3,6 +3,7 @@ import 'katex/dist/katex.min.css'
 import type { Slide } from '../../services/grok'
 import { toYouTubeEmbed, getYouTubeThumbnail } from '../../services/media'
 import { tokenizeTextWithCode, type Segment as CodeTextSegment, type CodeSegment } from '../../services/code'
+import { isPdfUrl, toPdfEmbedUrl } from '../../services/pdf'
 import Dialog from '@mui/material/Dialog'
 import DialogContent from '@mui/material/DialogContent'
 import IconButton from '@mui/material/IconButton'
@@ -11,7 +12,7 @@ import websiteImg from '../../assets/website.png'
 
 type Meta = { subject?: string; teacher?: string; logo?: string; unit?: string }
 
-type Visibility = { images: Record<number, boolean>; videos: Record<number, boolean>; web?: Record<number, boolean> }
+type Visibility = { images: Record<number, boolean>; videos: Record<number, boolean>; web?: Record<number, boolean>; pdf?: Record<number, boolean> }
 
 type Props = { slide: Slide; index: number; metadata?: Meta; visibility?: Visibility; totalSlides?: number; contentHeight?: number; isMobile?: boolean }
 
@@ -20,6 +21,7 @@ export default function SlideViewClassic({ slide, index, metadata, visibility, t
   const [openCode, setOpenCode] = useState<string | null>(null)
   const [openCodeLang, setOpenCodeLang] = useState<string | undefined>(undefined)
   const [openWebsite, setOpenWebsite] = useState<string | null>(null)
+  const [openPdf, setOpenPdf] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
 
   // determine if slide is text-only (no visible images or videos)
@@ -92,15 +94,36 @@ export default function SlideViewClassic({ slide, index, metadata, visibility, t
     {/* Title stays centered always; increase size when slide is text-only to reduce empty space */}
     <h2 className={`${isTextOnly ? (isMobile ? 'text-2xl' : 'text-3xl') + ' md:text-4xl' : (isMobile ? 'text-xl' : 'text-2xl') + ' md:text-3xl'} font-extrabold mb-4 text-center text-slate-800`}>{slide.title}</h2>
 
-    {/* If there are images and the visibility flag is true and position is left/right, render side-by-side on md+; else render content then images below centered */}
-          {slide.images && slide.images.length > 0 && (visibility?.images?.[index]) && (slide.imagesPosition === 'left' || slide.imagesPosition === 'right') ? (
+        {/* If there are images/PDFs and the visibility flag is true and position is left/right, render side-by-side on md+; else render content then images below centered */}
+          {slide.images && slide.images.length > 0 && (visibility?.images?.[index] || visibility?.pdf?.[index]) && (slide.imagesPosition === 'left' || slide.imagesPosition === 'right') ? (
             <div className={`flex flex-col md:flex-row items-start gap-6`}> 
               {slide.imagesPosition === 'left' ? (
                 <div className="md:w-1/3 flex flex-col gap-3">
                   {slide.images.map((src, i) => (
                     <div key={i} className="w-full rounded overflow-hidden bg-gray-50 flex items-center justify-center">
                       <div className="w-full h-36 md:h-44 lg:h-52">
-                        <img src={src} alt={`img-${i}`} className="w-full h-full object-contain" />
+                        {isPdfUrl(src) ? (
+                          visibility?.pdf?.[index] ? (
+                            <button type="button" onClick={() => setOpenPdf(src)} className="w-full h-full flex items-center justify-center bg-white">
+                              <div className="flex flex-col items-center gap-2">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#1f2937" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                  <path d="M14 2v6h6" />
+                                  <path d="M12 18h4" />
+                                </svg>
+                                <div className="text-sm text-gray-700">Abrir PDF</div>
+                              </div>
+                            </button>
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center"><div className="text-sm text-gray-500">PDF (oculto)</div></div>
+                          )
+                        ) : (
+                          visibility?.images?.[index] ? (
+                            <img src={src} alt={`img-${i}`} className="w-full h-full object-contain" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center"><div className="text-sm text-gray-500">Imagen (oculta)</div></div>
+                          )
+                        )}
                       </div>
                     </div>
                   ))}
@@ -176,39 +199,104 @@ export default function SlideViewClassic({ slide, index, metadata, visibility, t
               {slide.images && slide.images.length > 0 && (visibility?.images?.[index]) && (
                 <div className="mt-4 flex justify-center gap-3">
                       {slide.images.map((src, i) => (
-                        <div key={i} className="w-full max-w-md rounded overflow-hidden bg-gray-50 flex items-center justify-center">
-                          <div className="w-full h-36 md:h-44 lg:h-52">
-                            <img src={src} alt={`img-below-${i}`} className="w-full h-full object-contain" />
+                            <div key={i} className="w-full max-w-md rounded overflow-hidden bg-gray-50 flex items-center justify-center">
+                              <div className="w-full h-36 md:h-44 lg:h-52">
+                                {isPdfUrl(src) ? (
+                                  visibility?.pdf?.[index] ? (
+                                    <button type="button" onClick={() => setOpenPdf(src)} className="w-full h-full flex items-center justify-center bg-white">
+                                      <div className="flex flex-col items-center gap-2">
+                                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#1f2937" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                          <path d="M14 2v6h6" />
+                                          <path d="M12 18h4" />
+                                        </svg>
+                                        <div className="text-sm text-gray-700">Abrir PDF</div>
+                                      </div>
+                                    </button>
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center"><div className="text-sm text-gray-500">PDF (oculto)</div></div>
+                                  )
+                                ) : (
+                                  visibility?.images?.[index] ? (
+                                    <img src={src} alt={`img-below-${i}`} className="w-full h-full object-contain" />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center"><div className="text-sm text-gray-500">Imagen (oculta)</div></div>
+                                  )
+                                )}
+                              </div>
+                            </div>
+                              ))}
+                </div>
+              )}
+
+              {/* PDFs explicit block: render dedicated PDF tiles from slide.pdf when visible */}
+              {slide.pdf && slide.pdf.length > 0 && (visibility?.pdf?.[index]) && (
+                <div className="mt-4 flex justify-center gap-3">
+                  {slide.pdf.map((p, pi) => {
+                    const safeUrl = p && p.startsWith('http') ? p : `https://${p}`
+                    return (
+                      <div key={pi} className="w-full max-w-md rounded overflow-hidden bg-gray-50">
+                        <button type="button" onClick={() => setOpenPdf(safeUrl)} className="w-full h-36 md:h-44 lg:h-52 relative bg-white flex items-center justify-center">
+                          <div className="flex flex-col items-center gap-2">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#1f2937" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                              <path d="M14 2v6h6" />
+                              <path d="M12 18h4" />
+                            </svg>
+                            <div className="text-sm text-gray-700">Abrir PDF</div>
                           </div>
-                        </div>
-                      ))}
+                        </button>
+                      </div>
+                    )
+                  })}
                 </div>
               )}
 
               {/* Website placeholders: show representative image and make clickable */}
-              {slide.web && slide.web.length > 0 && (visibility?.web?.[index]) && (
+              {slide.web && slide.web.length > 0 && (visibility?.web?.[index] || visibility?.pdf?.[index]) && (
                 <div className="mt-4 flex justify-center gap-3">
                   {slide.web.map((w, wi) => {
                     const safeUrl = w && w.startsWith('http') ? w : `https://${w}`
                     const mshot = `https://s.wordpress.com/mshots/v1/${encodeURIComponent(safeUrl)}?w=1200`
                     return (
                       <div key={wi} className="w-full max-w-md rounded overflow-hidden bg-gray-50">
-                        <button type="button" onClick={() => setOpenWebsite(safeUrl)} className="block w-full h-36 md:h-44 lg:h-52 relative">
-                          <img
-                            src={mshot}
-                            alt={safeUrl}
-                            className="absolute inset-0 w-full h-full object-cover"
-                            onError={(e) => { try { (e.target as HTMLImageElement).src = websiteImg } catch { console.log('fallas')} }}
-                          />
-                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <div className="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
-                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1f2937" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                                <polygon points="5 3 19 12 5 21 5 3" fill="#1f2937" />
-                              </svg>
-                            </div>
-                          </div>
-                        </button>
-                      </div>
+                          {isPdfUrl(safeUrl) ? (
+                            visibility?.pdf?.[index] ? (
+                              <button type="button" onClick={() => setOpenPdf(safeUrl)} className="w-full h-36 md:h-44 lg:h-52 relative bg-white flex items-center justify-center">
+                                <div className="flex flex-col items-center gap-2">
+                                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#1f2937" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                    <path d="M14 2v6h6" />
+                                    <path d="M12 18h4" />
+                                  </svg>
+                                  <div className="text-sm text-gray-700">Abrir PDF</div>
+                                </div>
+                              </button>
+                            ) : (
+                              <div className="w-full h-36 md:h-44 lg:h-52 flex items-center justify-center"><div className="text-sm text-gray-500">PDF (oculto)</div></div>
+                            )
+                          ) : (
+                            visibility?.web?.[index] ? (
+                              <button type="button" onClick={() => setOpenWebsite(safeUrl)} className="block w-full h-36 md:h-44 lg:h-52 relative">
+                                <img
+                                  src={mshot}
+                                  alt={safeUrl}
+                                  className="absolute inset-0 w-full h-full object-cover"
+                                  onError={(e) => { try { (e.target as HTMLImageElement).src = websiteImg } catch { console.log('fallas')} }}
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                  <div className="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1f2937" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                                      <polygon points="5 3 19 12 5 21 5 3" fill="#1f2937" />
+                                    </svg>
+                                  </div>
+                                </div>
+                              </button>
+                            ) : (
+                              <div className="w-full h-36 md:h-44 lg:h-52 flex items-center justify-center"><div className="text-sm text-gray-500">Sitio (oculto)</div></div>
+                            )
+                          )}
+                        </div>
                     )
                   })}
                 </div>
@@ -333,6 +421,25 @@ export default function SlideViewClassic({ slide, index, metadata, visibility, t
             </IconButton>
           </DialogContent>
         </Dialog>
+      {/* PDF modal */}
+      <Dialog open={!!openPdf} onClose={() => setOpenPdf(null)} maxWidth="lg" fullWidth>
+        <DialogContent sx={{ p: 0, backgroundColor: '#000' }}>
+          <div style={{ position: 'relative', paddingTop: '56.25%' }}>
+            <iframe
+              src={openPdf ? toPdfEmbedUrl(openPdf) : ''}
+              title="pdf-viewer"
+              style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
+            />
+          </div>
+          <IconButton onClick={() => setOpenPdf(null)} aria-label="Cerrar" sx={{ position: 'absolute', right: 8, top: 8, color: '#fff' }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </IconButton>
+        </DialogContent>
+      </Dialog>
+
       {/* Footer: show page counter always; on desktop also show teacher on the left */}
       <div className="mt-6 pt-4 border-t border-gray-100">
         <div className={isMobile ? 'flex items-center justify-center' : 'flex items-center justify-between'}>

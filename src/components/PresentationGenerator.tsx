@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import SlideEditor from './SlideEditor'
 import { generateSlides } from '../services/grok'
 import { toYouTubeEmbed } from '../services/media'
+import { isPdfUrl } from '../services/pdf'
 import type { Slide } from '../services/grok'
 
 type Meta = { unit?: string; subject?: string; teacher?: string; logo?: string; topics?: string[]; slidesCount?: number; style?: 'text' | 'images' | 'advanced' }
@@ -52,12 +53,17 @@ export default function PresentationGenerator() {
             const images: Record<number, boolean> = {}
             const videos: Record<number, boolean> = {}
             const web: Record<number, boolean> = {}
+            const pdf: Record<number, boolean> = {}
             normalized.forEach((sl: Slide, idx: number) => {
               images[idx] = !!(sl.images && sl.images.length > 0)
               videos[idx] = !!(sl.videos && sl.videos.length > 0)
               web[idx] = !!(sl.web && sl.web.length > 0)
+              const hasPdfInImages = !!(sl.images && sl.images.some((u: string) => isPdfUrl(u)))
+              const hasPdfInWeb = !!(sl.web && sl.web.some((u: string) => isPdfUrl(u)))
+              const hasPdfExplicit = !!(sl.pdf && (sl.pdf as string[]).length > 0)
+              pdf[idx] = hasPdfExplicit || hasPdfInImages || hasPdfInWeb
             })
-            localStorage.setItem('presentaciones.visibility', JSON.stringify({ images, videos, web }))
+            localStorage.setItem('presentaciones.visibility', JSON.stringify({ images, videos, web, pdf }))
             } catch { /* ignore visibility persistence errors */ }
           return normalized as Slide[]
         } catch {
@@ -73,12 +79,17 @@ export default function PresentationGenerator() {
             const images: Record<number, boolean> = {}
             const videos: Record<number, boolean> = {}
             const web: Record<number, boolean> = {}
+            const pdf: Record<number, boolean> = {}
             normalized.forEach((sl: Slide, idx: number) => {
               images[idx] = !!(sl.images && sl.images.length > 0)
               videos[idx] = !!(sl.videos && sl.videos.length > 0)
               web[idx] = !!(sl.web && sl.web.length > 0)
+              const hasPdfInImages = !!(sl.images && sl.images.some((u: string) => isPdfUrl(u)))
+              const hasPdfInWeb = !!(sl.web && sl.web.some((u: string) => isPdfUrl(u)))
+              const hasPdfExplicit = !!(sl.pdf && (sl.pdf as string[]).length > 0)
+              pdf[idx] = hasPdfExplicit || hasPdfInImages || hasPdfInWeb
             })
-            localStorage.setItem('presentaciones.visibility', JSON.stringify({ images, videos, web }))
+            localStorage.setItem('presentaciones.visibility', JSON.stringify({ images, videos, web, pdf }))
           } catch { /* ignore */ }
           return normalized as Slide[]
         } catch {
@@ -231,10 +242,25 @@ export default function PresentationGenerator() {
         content: s.content || '',
         images: Array.isArray(s.images) ? s.images : (s.images ? [s.images] : undefined),
         videos: Array.isArray(s.videos) ? s.videos.map(v => toYouTubeEmbed(v)) : (s.videos ? [toYouTubeEmbed(s.videos as unknown as string)] : undefined),
-        // support web sites when present in the imported JSON
+        // support web sites when present in the imported JSON. Filter out .pdf URLs (they become `pdf`).
         web: (() => {
           const mw = (s as unknown as { web?: string | string[] }).web
-          return Array.isArray(mw) ? mw : (mw ? [mw] : undefined)
+          const arr = Array.isArray(mw) ? mw : (mw ? [mw] : undefined)
+          if (!arr) return undefined
+          const filtered = arr.map(String).filter(u => !isPdfUrl(u))
+          return filtered.length ? filtered : undefined
+        })(),
+        // support explicit pdf entries; if not present, extract pdf urls from web entries
+        pdf: (() => {
+          const explicit = (s as unknown as { pdf?: string | string[] }).pdf
+          if (Array.isArray(explicit)) return explicit
+          if (explicit) return [explicit]
+          // fallback: if web array exists in raw object and contains pdf urls, extract them
+          const mw = (s as unknown as { web?: string | string[] }).web
+          const arr = Array.isArray(mw) ? mw : (mw ? [mw] : undefined)
+          if (!arr) return undefined
+          const found = arr.filter((u: string) => isPdfUrl(String(u)))
+          return found.length ? found : undefined
         })(),
         imagesPosition: (s as Partial<Slide>).imagesPosition || undefined,
       })) as Slide[]
@@ -242,19 +268,25 @@ export default function PresentationGenerator() {
       setSlides(normalized)
 
       // ensure visibility flags are enabled for slides that actually contain media
-      try {
-        const images: Record<number, boolean> = {}
-        const videos: Record<number, boolean> = {}
-        const web: Record<number, boolean> = {}
-        normalized.forEach((sl, idx) => {
-          images[idx] = !!(sl.images && sl.images.length > 0)
-          videos[idx] = !!(sl.videos && sl.videos.length > 0)
-          web[idx] = !!(sl.web && sl.web.length > 0)
-        })
-        localStorage.setItem('presentaciones.visibility', JSON.stringify({ images, videos, web }))
-      } catch (e) {
-        console.warn('No se pudo persistir presentaciones.visibility al cargar JSON', e)
-      }
+        try {
+          const images: Record<number, boolean> = {}
+          const videos: Record<number, boolean> = {}
+          const web: Record<number, boolean> = {}
+          const pdf: Record<number, boolean> = {}
+          normalized.forEach((sl, idx) => {
+            images[idx] = !!(sl.images && sl.images.length > 0)
+            videos[idx] = !!(sl.videos && sl.videos.length > 0)
+            web[idx] = !!(sl.web && sl.web.length > 0)
+            const hasPdfInImages = !!(sl.images && sl.images.some((u: string) => isPdfUrl(u)))
+            const hasPdfInWeb = !!(sl.web && sl.web.some((u: string) => isPdfUrl(u)))
+            const hasPdfExplicit = !!(sl.pdf && (sl.pdf as string[]).length > 0)
+            pdf[idx] = hasPdfExplicit || hasPdfInImages || hasPdfInWeb
+          })
+          localStorage.setItem('presentaciones.visibility', JSON.stringify({ images, videos, web, pdf }))
+          try { window.dispatchEvent(new CustomEvent('presentaciones.visibility', { detail: { images, videos, web, pdf } })) } catch (e) { console.warn('No se pudo dispatch evento presentaciones.visibility', e) }
+        } catch (e) {
+          console.warn('No se pudo persistir presentaciones.visibility al cargar JSON', e)
+        }
 
       // if metadata present, populate form fields
       if (incomingMeta && typeof incomingMeta === 'object') {
@@ -280,12 +312,17 @@ export default function PresentationGenerator() {
           const images: Record<number, boolean> = {}
           const videos: Record<number, boolean> = {}
           const web: Record<number, boolean> = {}
+          const pdf: Record<number, boolean> = {}
           normalized.forEach((sl, idx) => {
             images[idx] = !!(sl.images && sl.images.length > 0)
             videos[idx] = !!(sl.videos && sl.videos.length > 0)
             web[idx] = !!(sl.web && sl.web.length > 0)
+            const hasPdfInImages = !!(sl.images && (sl.images as string[]).some((u: string) => isPdfUrl(u)))
+            const hasPdfInWeb = !!(sl.web && (sl.web as string[]).some((u: string) => isPdfUrl(u)))
+            pdf[idx] = hasPdfInImages || hasPdfInWeb
           })
-          localStorage.setItem('presentaciones.visibility', JSON.stringify({ images, videos, web }))
+          localStorage.setItem('presentaciones.visibility', JSON.stringify({ images, videos, web, pdf }))
+          try { window.dispatchEvent(new CustomEvent('presentaciones.visibility', { detail: { images, videos, web, pdf } })) } catch (e) { console.warn('No se pudo dispatch evento presentaciones.visibility', e) }
         } catch (innerErr) {
           console.warn('No se pudo persistir presentaciones.visibility al cargar JSON', innerErr)
         }

@@ -95,12 +95,14 @@ export default function PresentationPage() {
     const images: Record<number, boolean> = {}
     const videos: Record<number, boolean> = {}
     const web: Record<number, boolean> = {}
+    const pdf: Record<number, boolean> = {}
     slides.forEach((_, i) => {
       images[i] = true
       videos[i] = true
       web[i] = true
+      pdf[i] = true
     })
-    return { images, videos, web }
+    return { images, videos, web, pdf }
   }, [slides])
 
   // compute card width so exactly 5 cards fit in the visible area (or fewer if slides < 5)

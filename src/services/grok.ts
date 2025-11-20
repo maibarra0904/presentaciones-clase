@@ -1,6 +1,6 @@
 // Groq service adapted from 29-guia-estudio
 // Provides generateSlides(topic, slides, style, apiKey?) -> Slide[]
-export type Slide = { title: string; content: string; images?: string[]; videos?: string[]; web?: string[]; imagesPosition?: 'left' | 'right' };
+export type Slide = { title: string; content: string; images?: string[]; videos?: string[]; web?: string[]; pdf?: string[]; imagesPosition?: 'left' | 'right' };
 
 type GenerateParams = { topic: string; slides: number; style: 'text' | 'images' | 'advanced'; apiKey?: string };
 
